@@ -55,4 +55,6 @@ if __name__ == "__main__":
         map.display_map()
         print("Display : ",time.time() - s_time)
         
+    print("Sampled Destination")
+        
     cv2.waitKey(0)
