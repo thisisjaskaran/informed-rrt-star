@@ -3,23 +3,27 @@ import numpy as np
 import random
 import utils
 
-class Map():
+class Map:
 
     def __init__(self, height, width, step_size):
         self.height = height
         self.width = width
         self.step_size = step_size
         self.map =  np.ones((self.height,self.width,3), np.uint8) * 255
+        self.start = None
+        self.goal = None
 
         self.nodes = [] # list of tuples, where each tuple is a coordinate
         self.edges = [] # list of tuples, where each tuple is a set of indices of corressponding nodes
     
     def add_start(self,x,y):
         self.map[x,y] = (0,255,0)
+        self.start = (x,y)
         self.add_node(x,y)
     
     def add_goal(self,x,y):
         self.map[x,y] = (0,0,255)
+        self.goal = (x,y)
     
     def add_obstacle(self, x, y):
         self.map[x,y] = (0,0,0)
@@ -31,17 +35,19 @@ class Map():
                 # print(self.nodes[edge[0]],self.nodes[edge[1]])
                 img = cv2.line(img,self.nodes[edge[0]],self.nodes[edge[1]],(255,0,0),2)
         # print("tring to display")
+        img = cv2.circle(img,self.start,5,(0,255,0),-1)
+        img = cv2.circle(img,self.goal,5,(0,0,255),-1)
         cv2.imshow("map", img)
         cv2.waitKey(10)
     
     def sample_point(self):
 
-        random_x = random.randint(0,self.height)
-        random_y = random.randint(0,self.width)
+        random_x = random.randint(0,self.height) - 1
+        random_y = random.randint(0,self.width) - 1
 
         while(self.map[random_x,random_y,0] == 0 and self.map[random_x,random_y,1] == 0 and self.map[random_x,random_y,2] == 0):
-            random_x = random.randint(0,self.height)
-            random_y = random.randint(0,self.width)    
+            random_x = random.randint(0,self.height) - 1
+            random_y = random.randint(0,self.width) - 1
         
         return random_x,random_y
     
@@ -57,8 +63,12 @@ class Map():
             point = [x,y]
 
             det = np.sqrt((x-node[0])**2 + (y-node[1])**2)
-            step_to_sample_x = int((x-node[0]) * self.step_size / det + node[0])
-            step_to_sample_y = int((y-node[1]) * self.step_size / det + node[1])
+            if(det<self.step_size):
+                step_to_sample_x = x
+                step_to_sample_y = y
+            else:
+                step_to_sample_x = int((x-node[0]) * self.step_size / det + node[0])
+                step_to_sample_y = int((y-node[1]) * self.step_size / det + node[1])
 
             # if no collision, find closest node to sampled point
             if( utils.euclidean_distance(point,list(node)) < min_dist\
