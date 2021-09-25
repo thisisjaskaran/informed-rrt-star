@@ -10,6 +10,7 @@ if __name__ == "__main__":
     height = 500
     width = 700
     step_size = 13
+    search_radius = 5.0
 
     map = Map(height, width, step_size, start_pose, goal_pose)
 
@@ -37,20 +38,8 @@ if __name__ == "__main__":
 
         x_new, cost_new = map.steer(x_nearest, x_rand, cost)
 
-        # print(f"x_rand : ({x_rand.x},{x_rand.y}) x_nearest : ({x_nearest.x},{x_nearest.y}) x_new : ({x_new.x},{x_new.y}) cost_new : {cost_new}")
-        
-        edge = Edge(x_new, x_nearest, cost_new)
-        
-        if(map.collision_free(x_nearest, x_new)):
-            x_new.parent = x_nearest
-            x_new.cost = x_new.parent.cost + cost_new
-            map.nodes.append(x_new)
-
-            edge.node_1 = x_new
-            edge.node_2 = x_nearest
-            edge.cost = cost_new
-
-            map.edges.append(edge)
+        nodes_in_radius = map.get_nodes_in_radius(search_radius, x_new)
+        map.rewire(x_new,nodes_in_radius)
 
         map.display_map(x_rand)
 

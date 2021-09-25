@@ -6,6 +6,7 @@ add dynamic map forming
 # x is width, y is height
 # just do x,y everywhere
 
+from utils import euclidean_distance
 import cv2
 import numpy as np
 import random
@@ -16,6 +17,7 @@ class Node:
         self.x = x
         self.y = y
         self.parent = None
+        self.cost = 0.0
 
 class Edge:
     def __init__(self,node_1,node_2,cost):
@@ -29,14 +31,14 @@ class Map:
         self.width = width
 
         self.step_size = step_size
-        self.map =  np.ones((self.height,self.width,3), np.uint8) * 255 # numpy array
+        self.map =  np.ones((self.height,self.width,3), np.uint8) * 255
 
-        self.start = Node(start[0],start[1]) # object of class Node
-        self.goal = Node(goal[0],goal[1]) # object of class Node
+        self.start = Node(start[0],start[1])
+        self.goal = Node(goal[0],goal[1])
 
-        self.obstacle_list = [] # list of tuple (x,y)
-        self.nodes = [self.start] # list of Node objects
-        self.edges = [] # list of Edge objects
+        self.obstacle_list = []
+        self.nodes = [self.start]
+        self.edges = []
         self.x_soln = []
 
         self.solution_found = False
@@ -52,7 +54,8 @@ class Map:
                 self.obstacle_list.append((j,i))
     
     def display_map(self,x_rand,best_path_found = False):
-        img = self.map
+        # img = self.map
+        img = np.ones((self.height,self.width,3), np.uint8) * 255 # numpy array
         img = cv2.circle(img,(self.start.x,self.start.y),5,(0,255,0),-1)
         img = cv2.circle(img,(self.goal.x,self.goal.y),5,(0,0,255),-1)
         # img = cv2.circle(img,(x_rand.x,x_rand.y),5,(0,0,0),-1)
@@ -73,26 +76,16 @@ class Map:
                 node_2 = (self.x_soln[i+1].x,self.x_soln[i+1].y)
                 img = cv2.line(img,node_1,node_2,(0,0,255),4)
 
-        # for obstacle in self.obstacle_list:
-        #     img[obstacle[0],obstacle[1]] = (0,0,0)
+        for obstacle in self.obstacle_list:
+            img[obstacle[0],obstacle[1]] = (0,0,0)
 
         cv2.imshow("img",img)
         cv2.waitKey(10)
     
     def euclidean_distance(self, node_1, node_2):
-        """
-        Returns euclidean distance between 2 nodes
-        Inputs : Node node_1, Node node_2
-        Output : distance
-        """
         return np.sqrt( (node_1.x - node_2.x)**2 + (node_1.y - node_2.y)**2)
     
     def sample(self, x_start, x_goal, c_max):
-        """
-        Returns random sample
-        Inputs : Node x_start, Node x_goal, max_cost
-        Output : Node random_node
-        """
         _1 = x_start
         _2 = x_goal
         _3 = c_max
@@ -105,11 +98,6 @@ class Map:
         return random_node
     
     def nearest_node(self, x_rand):
-        """
-        Return nearest node to random sample
-        Inputs : Node x_nearest, Node random_node
-        Output : Node nearest_node, cost
-        """
         cost = np.inf
         nearest_node_to_sample = None
         found_nearest_node = False
@@ -126,11 +114,6 @@ class Map:
             return found_nearest_node, x_rand, 0
     
     def steer(self, x_nearest, x_rand, cost):
-        """
-        Return nearest node to random sample
-        Inputs : Node x_nearest, Node random_node
-        Output : Node stepped_node, cost
-        """
         det = self.euclidean_distance(x_nearest, x_rand)
 
         if(det <= self.step_size):
@@ -146,36 +129,6 @@ class Map:
             return stepped_node, cost
     
     def collision_free(self, x_nearest, x_new):
-        """
-        Return nearest node to random sample
-        Inputs : Node x_nearest, Node x_new
-        Output : Node stepped_node, cost
-        """
-        # print(f"Points : ({x_new.x},{x_new.y}) and ({x_nearest.x},{x_nearest.y})")
-        # print((x_new.x - x_nearest.x))
-        # print(self.map[160,160])
-
-        # if(self.map[x_nearest.x,x_nearest.y,0] == 0 and self.map[x_nearest.x,x_nearest.y,1] == 0 and self.map[x_nearest.x,x_nearest.y,2] == 0):
-        #     return 0
-
-        # alpha = math.atan2((x_new.y - x_nearest.y),(x_new.x - x_nearest.x))
-        
-        # for x in range(x_nearest.x, x_new.x):
-        #     y = math.tan(alpha) * (x - x_nearest.x) + x_nearest.y
-        #     x_int = int(x)
-        #     if(x_int >= self.width - 1):
-        #         return 0
-
-        #     y_int = int(y)
-        #     if(y_int >= self.height - 1):
-        #         # y_int = self.height-1w.x,x_new.y,2] == 0):
-        #         return 0  
-        #     if(self.map[y_int,y_int,0] == 0 and self.map[y_int,y_int,1] == 0 and self.map[y_int,y_int,2] == 0):
-        #         print("Collision for this point")
-        #         return 0
-        # print("No collision")
-        # return 1
-        # print(x_new.x,x_new.y)
         if(self.map[x_nearest.y,x_nearest.x,0] == 0 and self.map[x_nearest.y,x_nearest.x,1] == 0 and self.map[x_nearest.y,x_nearest.x,2] == 0):
             return 0
         if(self.map[x_new.y,x_new.x,0] == 0 and self.map[x_new.y,x_new.x,1] == 0 and self.map[x_new.y,x_new.x,2] == 0):
@@ -189,3 +142,49 @@ class Map:
     def print_best_path(self):
         for node in self.x_soln:
             print(node.x,node.y)
+    
+    def get_nodes_in_radius(self,radius,x_new):
+        nodes_in_radius = []
+        for node in self.nodes:
+            if(self.euclidean_distance(node,x_new) <= radius):
+                nodes_in_radius.append(node)
+        return nodes_in_radius
+
+    def delete_edge(self,node_1,node_2):
+        for edge in self.edges:
+            if((edge.node_1 == node_1 and edge.node_2 == node_2) or (edge.node_1 == node_2 and edge.node_2 == node_1)):
+                self.edges.remove(edge)
+    
+    def delete_all_edges(self,node):
+        edges_to_remove = []
+        for edge in self.edges:
+            if(edge.node_1 == node or edge.node_2 == node):
+                edges_to_remove.append(edge)
+        # to avoid memory issues
+        for edge_ in edges_to_remove:
+            self.edges.remove(edge_)
+    
+    def rewire(self,x_new,nodes_in_radius):
+        cost = np.inf
+        best_cost_node = None
+        # connect to best-case node
+        for node in nodes_in_radius:
+            if(self.euclidean_distance(node,x_new)<cost):
+                cost = self.euclidean_distance(node,x_new)
+                best_cost_node = node
+        x_new.parent = best_cost_node
+        x_new.cost = self.euclidean_distance(best_cost_node,x_new) + best_cost_node.cost
+        nodes_in_radius.remove(best_cost_node)
+        # form new edge
+        edge = Edge(best_cost_node,x_new,self.euclidean_distance(best_cost_node,x_new))
+        self.edges.append(edge)
+        # rewire
+        for node in nodes_in_radius:
+            if(x_new.cost + self.euclidean_distance(x_new,node) < node.cost):
+                node.cost = x_new.cost + self.euclidean_distance(x_new,node)
+                node.parent = x_new
+                self.delete_all_edges(node)
+                edge.node_1 = x_new
+                edge.node_2 = node
+                edge.cost = self.euclidean_distance(x_new,node)
+                self.edges.append(edge)
