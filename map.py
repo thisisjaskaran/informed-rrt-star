@@ -1,108 +1,191 @@
+"""
+add resolution, threshold to collision check
+check intermediate points for collision
+add dynamic map forming
+"""
+# x is width, y is height
+# just do x,y everywhere
+
 import cv2
 import numpy as np
 import random
-import utils
+import math
+
+class Node:
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
+        self.parent = None
+
+class Edge:
+    def __init__(self,node_1,node_2,cost):
+        self.node_1 = node_1
+        self.node_2 = node_2
+        self.cost = cost
 
 class Map:
-
-    def __init__(self, height, width, step_size):
+    def __init__(self, height, width, step_size, start, goal):
         self.height = height
         self.width = width
-        self.step_size = step_size
-        self.map =  np.ones((self.height,self.width,3), np.uint8) * 255
-        self.start = None
-        self.goal = None
 
-        self.nodes = [] # list of tuples, where each tuple is a coordinate
-        self.edges = [] # list of tuples, where each tuple is a set of indices of corressponding nodes
+        self.step_size = step_size
+        self.map =  np.ones((self.height,self.width,3), np.uint8) * 255 # numpy array
+
+        self.start = Node(start[0],start[1]) # object of class Node
+        self.goal = Node(goal[0],goal[1]) # object of class Node
+
+        self.obstacle_list = [] # list of tuple (x,y)
+        self.nodes = [self.start] # list of Node objects
+        self.edges = [] # list of Edge objects
+        self.x_soln = []
+
+        self.solution_found = False
+        self.c_best = np.inf
+        self.bot_safety_distance = 1.0
+
+    def add_obstacle(self,x,y,width,height):
+        for i in range(x,x+width):
+            for j in range(y,y+height):
+                self.map[j,i,0] = 0
+                self.map[j,i,1] = 0
+                self.map[j,i,2] = 0
+                self.obstacle_list.append((j,i))
     
-    def add_start(self,x,y):
-        self.map[x,y] = (0,255,0)
-        self.start = (x,y)
-        self.add_node(x,y)
-    
-    def add_goal(self,x,y):
-        self.map[x,y] = (0,0,255)
-        self.goal = (x,y)
-    
-    def add_obstacle(self, x, y):
-        self.map[x,y] = (0,0,0)
-    
-    def display_map(self, display_tree = True):
+    def display_map(self,x_rand,best_path_found = False):
         img = self.map
-        if(display_tree):
-            for edge in self.edges:
-                # print(self.nodes[edge[0]],self.nodes[edge[1]])
-                img = cv2.line(img,self.nodes[edge[0]],self.nodes[edge[1]],(255,0,0),2)
-        # print("tring to display")
-        img = cv2.circle(img,self.start,5,(0,255,0),-1)
-        img = cv2.circle(img,self.goal,5,(0,0,255),-1)
-        cv2.imshow("map", img)
+        img = cv2.circle(img,(self.start.x,self.start.y),5,(0,255,0),-1)
+        img = cv2.circle(img,(self.goal.x,self.goal.y),5,(0,0,255),-1)
+        # img = cv2.circle(img,(x_rand.x,x_rand.y),5,(0,0,0),-1)
+
+        for edge in self.edges:
+            node_1 = (edge.node_1.x,edge.node_1.y)
+            node_2 = (edge.node_2.x,edge.node_2.y)
+            img = cv2.line(img,node_1,node_2,(255,0,0),2)
+
+        if(best_path_found):
+            curr_node = self.goal
+            while(curr_node is not None):
+                self.x_soln.append(curr_node)
+                curr_node = curr_node.parent
+        
+            for i in range(len(self.x_soln)-1):
+                node_1 = (self.x_soln[i].x,self.x_soln[i].y)
+                node_2 = (self.x_soln[i+1].x,self.x_soln[i+1].y)
+                img = cv2.line(img,node_1,node_2,(0,0,255),4)
+
+        # for obstacle in self.obstacle_list:
+        #     img[obstacle[0],obstacle[1]] = (0,0,0)
+
+        cv2.imshow("img",img)
         cv2.waitKey(10)
     
-    def sample_point(self):
-
-        random_x = random.randint(0,self.height) - 1
-        random_y = random.randint(0,self.width) - 1
-
-        while(self.map[random_x,random_y,0] == 0 and self.map[random_x,random_y,1] == 0 and self.map[random_x,random_y,2] == 0):
-            random_x = random.randint(0,self.height) - 1
-            random_y = random.randint(0,self.width) - 1
-        
-        return random_x,random_y
+    def euclidean_distance(self, node_1, node_2):
+        """
+        Returns euclidean distance between 2 nodes
+        Inputs : Node node_1, Node node_2
+        Output : distance
+        """
+        return np.sqrt( (node_1.x - node_2.x)**2 + (node_1.y - node_2.y)**2)
     
-    def find_nearest(self,x,y):
+    def sample(self, x_start, x_goal, c_max):
+        """
+        Returns random sample
+        Inputs : Node x_start, Node x_goal, max_cost
+        Output : Node random_node
+        """
+        _1 = x_start
+        _2 = x_goal
+        _3 = c_max
 
-        min_dist = np.inf
-        closest_node = None
+        random_x = random.randint(0,self.width)
+        random_y = random.randint(0,self.height)
 
+        random_node = Node(random_x, random_y)
+
+        return random_node
+    
+    def nearest_node(self, x_rand):
+        """
+        Return nearest node to random sample
+        Inputs : Node x_nearest, Node random_node
+        Output : Node nearest_node, cost
+        """
+        cost = np.inf
+        nearest_node_to_sample = None
         found_nearest_node = False
 
-        # check list of nodes to find closest node
-        for node in self.nodes:
-            point = [x,y]
-
-            det = np.sqrt((x-node[0])**2 + (y-node[1])**2)
-            if(det<self.step_size):
-                step_to_sample_x = x
-                step_to_sample_y = y
-            else:
-                step_to_sample_x = int((x-node[0]) * self.step_size / det + node[0])
-                step_to_sample_y = int((y-node[1]) * self.step_size / det + node[1])
-
-            # if no collision, find closest node to sampled point
-            if( utils.euclidean_distance(point,list(node)) < min_dist\
-                and self.map[step_to_sample_x,step_to_sample_y,0] == 255\
-                and self.map[step_to_sample_x,step_to_sample_y,1] == 255\
-                and self.map[step_to_sample_x,step_to_sample_y,2] == 255):
-
-                min_dist = utils.euclidean_distance(point,node)
-                closest_node = node
+        for node_ in self.nodes:
+            if(self.euclidean_distance(x_rand,node_) < cost):
+                cost = self.euclidean_distance(x_rand,node_)
+                nearest_node_to_sample = node_
                 found_nearest_node = True
 
-        return found_nearest_node, closest_node
-
-    def add_node(self,x,y):
-        self.nodes.append((x,y))
-    
-    def add_edge(self,node_1,node_2):
-        self.edges.append((node_1,node_2))
-    
-    def take_step(self,nearest_node,random_point):
-        norm = utils.euclidean_distance(nearest_node,random_point)
-        if(norm > self.step_size):
-            scale = self.step_size/norm
-            step_vector = [int(scale * (random_point[0] - nearest_node[0]) + nearest_node[0]) , int(scale * (random_point[1] - nearest_node[1]) + nearest_node[1]) ]
-            return step_vector
+        if(nearest_node_to_sample is not None):
+            return found_nearest_node, nearest_node_to_sample, cost
         else:
-            return random_point
+            return found_nearest_node, x_rand, 0
+    
+    def steer(self, x_nearest, x_rand, cost):
+        """
+        Return nearest node to random sample
+        Inputs : Node x_nearest, Node random_node
+        Output : Node stepped_node, cost
+        """
+        det = self.euclidean_distance(x_nearest, x_rand)
 
-if __name__=="__main__":
-    map = Map(500,800)
+        if(det <= self.step_size):
+            return x_rand, cost
+        else:
+            step_x = int(x_nearest.x + (x_rand.x - x_nearest.x) * self.step_size / det)
+            step_y = int(x_nearest.y + (x_rand.y - x_nearest.y) * self.step_size / det)
+            
+            stepped_node = Node(step_x, step_y)
 
-    point_1 = [0,0]
-    point_2 = [20,10]
+            cost = self.euclidean_distance(stepped_node, x_nearest)
+            
+            return stepped_node, cost
+    
+    def collision_free(self, x_nearest, x_new):
+        """
+        Return nearest node to random sample
+        Inputs : Node x_nearest, Node x_new
+        Output : Node stepped_node, cost
+        """
+        # print(f"Points : ({x_new.x},{x_new.y}) and ({x_nearest.x},{x_nearest.y})")
+        # print((x_new.x - x_nearest.x))
+        # print(self.map[160,160])
 
-    points_in_line = map.find_points_in_line(point_1,point_2)
+        # if(self.map[x_nearest.x,x_nearest.y,0] == 0 and self.map[x_nearest.x,x_nearest.y,1] == 0 and self.map[x_nearest.x,x_nearest.y,2] == 0):
+        #     return 0
 
-    print(points_in_line)
+        # alpha = math.atan2((x_new.y - x_nearest.y),(x_new.x - x_nearest.x))
+        
+        # for x in range(x_nearest.x, x_new.x):
+        #     y = math.tan(alpha) * (x - x_nearest.x) + x_nearest.y
+        #     x_int = int(x)
+        #     if(x_int >= self.width - 1):
+        #         return 0
+
+        #     y_int = int(y)
+        #     if(y_int >= self.height - 1):
+        #         # y_int = self.height-1w.x,x_new.y,2] == 0):
+        #         return 0  
+        #     if(self.map[y_int,y_int,0] == 0 and self.map[y_int,y_int,1] == 0 and self.map[y_int,y_int,2] == 0):
+        #         print("Collision for this point")
+        #         return 0
+        # print("No collision")
+        # return 1
+        # print(x_new.x,x_new.y)
+        if(self.map[x_nearest.y,x_nearest.x,0] == 0 and self.map[x_nearest.y,x_nearest.x,1] == 0 and self.map[x_nearest.y,x_nearest.x,2] == 0):
+            return 0
+        if(self.map[x_new.y,x_new.x,0] == 0 and self.map[x_new.y,x_new.x,1] == 0 and self.map[x_new.y,x_new.x,2] == 0):
+            return 0
+        return 1
+    
+    def print_nodes(self):
+        for node in self.nodes:
+            print(node.x,node.y)
+
+    def print_best_path(self):
+        for node in self.x_soln:
+            print(node.x,node.y)
