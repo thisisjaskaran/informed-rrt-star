@@ -2,6 +2,7 @@
 add resolution, threshold to collision check
 check intermediate points for collision
 add dynamic map forming
+visualization gaps
 """
 # x is width, y is height
 # just do x,y everywhere
@@ -64,7 +65,7 @@ class Map:
         for edge in self.edges:
             node_1 = (edge.node_1.x,edge.node_1.y)
             node_2 = (edge.node_2.x,edge.node_2.y)
-            img = cv2.line(img,node_1,node_2,(255,0,0),2)
+            img = cv2.line(img,node_1,node_2,(255,0,0),1)
 
         if(best_path_found):
             curr_node = self.goal
@@ -80,6 +81,18 @@ class Map:
         for obstacle in self.obstacle_list:
             img[obstacle[0],obstacle[1]] = (0,0,0)
 
+        for node in self.nodes:
+            curr_node = node
+            path = []
+            while(curr_node is not None):
+                path.append(curr_node)
+                curr_node = curr_node.parent
+        
+            for i in range(len(path)-1):
+                node_1 = (path[i].x,path[i].y)
+                node_2 = (path[i+1].x,path[i+1].y)
+                img = cv2.line(img,node_1,node_2,(255,0,0),1)
+
         cv2.imshow("img",img)
         cv2.waitKey(10)
     
@@ -87,9 +100,9 @@ class Map:
         return np.sqrt( (node_1.x - node_2.x)**2 + (node_1.y - node_2.y)**2)
     
     def sample(self, x_start, x_goal, c_max):
-        _1 = x_start
-        _2 = x_goal
-        _3 = c_max
+        # _1 = x_start
+        # _2 = x_goal
+        # _3 = c_max
 
         random_x = random.randint(0,self.width)
         random_y = random.randint(0,self.height)
@@ -213,6 +226,10 @@ class Map:
 
         x_new.parent = best_cost_node
         x_new.cost = self.euclidean_distance(best_cost_node,x_new) + best_cost_node.cost
+        edge.node_1 = x_new
+        edge.node_2 = x_new.parent
+        edge.cost = self.euclidean_distance(x_new,x_new.parent)
+        self.edges.append(edge)
         if(len(self.nodes) == 1):
             print("1 node but still rewiring!")
 
@@ -220,6 +237,8 @@ class Map:
 
         # form new edge
         self.nodes.append(x_new)
+
+        parent_edge = Edge(x_new, x_new.parent, self.euclidean_distance(x_new,x_new.parent))
 
         for node in nodes_in_radius:
             if(self.collision_free(x_new,node)):
@@ -233,10 +252,14 @@ class Map:
                     self.edges.append(edge)
                 else:
                     pass
+            parent_edge.node_1 = node
+            parent_edge.node_2 = node.parent
+            parent_edge.cost = self.euclidean_distance(node,node.parent)
+            self.edges.append(parent_edge)
         best_cost_edge = Edge(x_new,best_cost_node,self.euclidean_distance(x_new,best_cost_node))
         self.edges.append(best_cost_edge)
 
-def debug():
+def debug_rewiring():
     start = [10,10]
     goal = [90,90]
     check_radius = 10.0
@@ -276,4 +299,4 @@ def debug():
     map.rewire(x_rand,nodes_in_range)
 
 if __name__=="__main__":
-    debug()
+    debug_rewiring()
