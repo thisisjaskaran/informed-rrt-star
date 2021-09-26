@@ -151,12 +151,34 @@ class Map:
             node_cost = node.parent.cost + self.euclidean_distance(node,node.parent)
         return node_cost
     
-    def collision_free(self, x_nearest, x_new):
+    def nodes_slope(self,node_1,node_2):
+        num = node_1.y - node_2.y
+        den = node_1.x - node_2.x
+        return math.atan2(num,den)
+
+    def collision_free(self, x_nearest, x_new, resolution = 0.1):
         if(self.map[x_nearest.y,x_nearest.x,0] == 0 and self.map[x_nearest.y,x_nearest.x,1] == 0 and self.map[x_nearest.y,x_nearest.x,2] == 0):
             return 0
         if(self.map[x_new.y,x_new.x,0] == 0 and self.map[x_new.y,x_new.x,1] == 0 and self.map[x_new.y,x_new.x,2] == 0):
             return 0
+
+        parts = int(1/resolution)
+        
+        print(x_nearest.x,x_nearest.y)
+        print(x_new.x,x_new.y)
+        for i in range(1,parts):
+            section_y = int((x_nearest.x*i + x_new.x*(parts-i))/parts)
+            section_x = int((x_nearest.y*i + x_new.y*(parts-i))/parts)
+            print(section_x,section_y)
+            # cv2.waitKey(0)
+            if(self.map[section_x,section_y,0] == 0 and self.map[section_x,section_y,1] == 0 and self.map[section_x,section_y,2] == 0):
+                return 0
         return 1
+    
+    def is_in_obstacle(self,node):
+        if(self.map[node.x,node.y,0] ==0 and self.map[node.x,node.y,1] == 0 and self.map[node.x,node.y,2] == 0):
+            return 1
+        return 0
 
     def print_nodes(self):
         for node in self.nodes:
@@ -229,7 +251,8 @@ class Map:
         edge.node_1 = x_new
         edge.node_2 = x_new.parent
         edge.cost = self.euclidean_distance(x_new,x_new.parent)
-        self.edges.append(edge)
+        if(self.collision_free(best_cost_node,x_new,resolution=0.1)):
+            self.edges.append(edge)
         if(len(self.nodes) == 1):
             print("1 node but still rewiring!")
 
@@ -252,6 +275,9 @@ class Map:
                     self.edges.append(edge)
                 else:
                     pass
+            else:
+                print("Collision while rewiring")
+                continue
             parent_edge.node_1 = node
             parent_edge.node_2 = node.parent
             parent_edge.cost = self.euclidean_distance(node,node.parent)

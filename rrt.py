@@ -36,8 +36,6 @@ if __name__ == "__main__":
             continue
 
         x_new, cost_new = map.steer(x_nearest, x_rand, cost)
-
-        # print(f"x_rand : ({x_rand.x},{x_rand.y}) x_nearest : ({x_nearest.x},{x_nearest.y}) x_new : ({x_new.x},{x_new.y}) cost_new : {cost_new}")
         
         edge = Edge(x_new, x_nearest, cost_new)
         

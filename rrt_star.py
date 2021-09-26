@@ -5,12 +5,12 @@ import time
 
 if __name__ == "__main__":
 
-    start_pose = [200,200]
-    goal_pose = [380,380]
+    start_pose = [60,60]
+    goal_pose = [270,270]
     height = 400
     width = 400
-    step_size = 10
-    search_radius = 40.0
+    step_size = 3
+    search_radius = 8.0
 
     if(search_radius < step_size):
         print("search radius should be > step_size")
@@ -19,15 +19,15 @@ if __name__ == "__main__":
 
     map.set_node_cost(map.start)
 
-    # for i in range(0,width,50):
-    #     for j in range(0,height,50):
-    #         map.add_obstacle(i,j,30,30)
+    for i in range(0,width,40):
+        for j in range(0,height,40):
+            map.add_obstacle(i,j,10,10)
 
     x_new = Node(map.start.x,map.start.y)
 
     map.display_map(x_new)
 
-    while(map.euclidean_distance(x_new,map.goal) > map.step_size):
+    while(map.euclidean_distance(x_new,map.goal) > search_radius):
 
         if(map.solution_found):
             map.c_best = map.x_soln.sort()[0]
@@ -42,6 +42,11 @@ if __name__ == "__main__":
             continue
 
         x_new, cost_new = map.steer(x_nearest, x_rand, cost)
+
+        if(map.is_in_obstacle(x_new)):
+            continue
+        # if(not map.collision_free(x_new,x_nearest)):
+        #     continue
 
         map.set_node_cost(x_new)
 
