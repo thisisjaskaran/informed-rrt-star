@@ -10,13 +10,18 @@ if __name__ == "__main__":
     height = 500
     width = 700
     step_size = 13
-    search_radius = 5.0
+    search_radius = 25.0
+
+    if(search_radius < step_size):
+        print("search radius should be > step_size")
 
     map = Map(height, width, step_size, start_pose, goal_pose)
 
-    for i in range(0,width,50):
-        for j in range(0,height,50):
-            map.add_obstacle(i,j,30,30)
+    map.set_node_cost(map.start)
+
+    # for i in range(0,width,50):
+    #     for j in range(0,height,50):
+    #         map.add_obstacle(i,j,30,30)
 
     x_new = Node(map.start.x,map.start.y)
 
@@ -38,10 +43,30 @@ if __name__ == "__main__":
 
         x_new, cost_new = map.steer(x_nearest, x_rand, cost)
 
+        map.set_node_cost(x_new)
+
         nodes_in_radius = map.get_nodes_in_radius(search_radius, x_new)
-        map.rewire(x_new,nodes_in_radius)
+
+        edge = Edge(x_new, x_nearest, cost_new)
+
+        if(map.first_sample):
+            x_new.parent = map.start
+            x_new.cost = map.euclidean_distance(x_new,map.start)
+            map.nodes.append(x_new)
+            
+            edge.node_1 = map.start
+            edge.node_2 = x_new
+            edge.cost = x_new.cost
+            map.edges.append(edge)
+
+            map.first_sample = False
+            
+        else:
+            map.rewire(x_new,nodes_in_radius)
 
         map.display_map(x_rand)
+
+        # cv2.waitKey(0)
 
     map.solution_found = True
 

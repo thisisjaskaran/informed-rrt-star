@@ -44,6 +44,7 @@ class Map:
         self.solution_found = False
         self.c_best = np.inf
         self.bot_safety_distance = 1.0
+        self.first_sample = True
 
     def add_obstacle(self,x,y,width,height):
         for i in range(x,x+width):
@@ -128,20 +129,44 @@ class Map:
             
             return stepped_node, cost
     
+    def set_node_cost(self,node):
+        node_cost = 0.0
+        curr_node = node
+        if(curr_node.parent is None):
+            node_cost = 0.0
+        else:
+            node_cost = node.parent.cost + self.euclidean_distance(node,node.parent)
+        return node_cost
+    
     def collision_free(self, x_nearest, x_new):
         if(self.map[x_nearest.y,x_nearest.x,0] == 0 and self.map[x_nearest.y,x_nearest.x,1] == 0 and self.map[x_nearest.y,x_nearest.x,2] == 0):
             return 0
         if(self.map[x_new.y,x_new.x,0] == 0 and self.map[x_new.y,x_new.x,1] == 0 and self.map[x_new.y,x_new.x,2] == 0):
             return 0
         return 1
-    
+
     def print_nodes(self):
         for node in self.nodes:
             print(node.x,node.y)
+    
+    def print_node_list(self,nodes_in_range):
+        for node in nodes_in_range:
+            print(node.x,node.y)
+
+    def print_edges(self):
+        for edge in self.edges:
+            print(f"Edge between ({edge.node_1.x},{edge.node_1.y}) and ({edge.node_2.x},{edge.node_2.y}), cost : {edge.cost}")
+    
+    def print_nodes_and_edges(self):
+        print("Nodes : ",self.print_nodes())
+        print("Edges : ",self.print_edges())
 
     def print_best_path(self):
         for node in self.x_soln:
             print(node.x,node.y)
+    
+    def print_parent(self,node):
+        print(f"Parent : ({node.parent.x},{node.parent.y})")
     
     def get_nodes_in_radius(self,radius,x_new):
         nodes_in_radius = []
@@ -164,27 +189,91 @@ class Map:
         for edge_ in edges_to_remove:
             self.edges.remove(edge_)
     
+    def revise_costs(self):
+        for node in self.nodes:
+            node.cost = self.set_node_cost(node)
+
     def rewire(self,x_new,nodes_in_radius):
+        
+        for node in self.nodes:
+            node.cost = self.set_node_cost(node)
+
         cost = np.inf
         best_cost_node = None
+        first_sample = False
+
         # connect to best-case node
         for node in nodes_in_radius:
-            if(self.euclidean_distance(node,x_new)<cost):
-                cost = self.euclidean_distance(node,x_new)
+            if(node.cost + self.euclidean_distance(node,x_new) < cost):
                 best_cost_node = node
+                cost = node.cost + self.euclidean_distance(node,x_new)
+        
+        self.delete_all_edges(x_new)
+        edge = Edge(best_cost_node,x_new,self.euclidean_distance(best_cost_node,x_new))
+
         x_new.parent = best_cost_node
         x_new.cost = self.euclidean_distance(best_cost_node,x_new) + best_cost_node.cost
+        if(len(self.nodes) == 1):
+            print("1 node but still rewiring!")
+
         nodes_in_radius.remove(best_cost_node)
+
         # form new edge
-        edge = Edge(best_cost_node,x_new,self.euclidean_distance(best_cost_node,x_new))
-        self.edges.append(edge)
-        # rewire
+        self.nodes.append(x_new)
+
         for node in nodes_in_radius:
-            if(x_new.cost + self.euclidean_distance(x_new,node) < node.cost):
-                node.cost = x_new.cost + self.euclidean_distance(x_new,node)
-                node.parent = x_new
-                self.delete_all_edges(node)
-                edge.node_1 = x_new
-                edge.node_2 = node
-                edge.cost = self.euclidean_distance(x_new,node)
-                self.edges.append(edge)
+            if(self.collision_free(x_new,node)):
+                if(x_new.cost + self.euclidean_distance(x_new,node) < node.cost):
+                    node.cost = x_new.cost + self.euclidean_distance(x_new,node)
+                    node.parent = x_new
+                    self.delete_all_edges(node)
+                    edge.node_1 = x_new
+                    edge.node_2 = node
+                    edge.cost = self.euclidean_distance(x_new,node)
+                    self.edges.append(edge)
+                else:
+                    pass
+        best_cost_edge = Edge(x_new,best_cost_node,self.euclidean_distance(x_new,best_cost_node))
+        self.edges.append(best_cost_edge)
+
+def debug():
+    start = [10,10]
+    goal = [90,90]
+    check_radius = 10.0
+
+    map = Map(100,100,8,start,goal)
+
+    node_1 = Node(20,20)
+    node_1.parent = map.start
+    node_1.cost = map.set_node_cost(node_1)
+    map.nodes.append(node_1)
+
+    node_2 = Node(30,20)
+    node_2.parent = node_1
+    node_2.cost = map.set_node_cost(node_2)
+    map.nodes.append(node_2)
+
+    node_3 = Node(26,24)
+    node_3.parent = node_2
+    node_3.cost = map.set_node_cost(node_3)
+    map.nodes.append(node_3)
+
+    edge_1 = Edge(map.start,node_1,map.euclidean_distance(map.start,node_1))
+    map.edges.append(edge_1)
+
+    edge_2 = Edge(node_1,node_2,map.euclidean_distance(node_2,node_1))
+    map.edges.append(edge_2)
+
+    edge_3 = Edge(node_2,node_3,map.euclidean_distance(node_2,node_3))
+    map.edges.append(edge_3)
+
+    x_rand = Node(23,22)
+    x_rand.parent = map.start
+    x_rand.cost = map.euclidean_distance(map.start,x_rand)
+
+    nodes_in_range = map.get_nodes_in_radius(check_radius,x_rand)
+
+    map.rewire(x_rand,nodes_in_range)
+
+if __name__=="__main__":
+    debug()
