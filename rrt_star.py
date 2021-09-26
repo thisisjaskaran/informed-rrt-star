@@ -2,15 +2,17 @@ import numpy as np
 import cv2
 from map import *
 import time
+import tqdm
 
 if __name__ == "__main__":
 
     start_pose = [60,60]
-    goal_pose = [270,270]
+    goal_pose = [60,370]
     height = 400
     width = 400
-    step_size = 3
-    search_radius = 8.0
+    step_size = 25
+    search_radius = 35.0
+    ITERATIONS = 1000
 
     if(search_radius < step_size):
         print("search radius should be > step_size")
@@ -19,9 +21,13 @@ if __name__ == "__main__":
 
     map.set_node_cost(map.start)
 
-    for i in range(0,width,40):
-        for j in range(0,height,40):
-            map.add_obstacle(i,j,10,10)
+    # for i in range(0,width,40):
+    #     for j in range(0,height,40):
+    #         map.add_obstacle(i,j,10,10)
+
+    map.add_obstacle(20,120,200,40)
+    # map.add_obstacle(150,200,250,40)
+    map.add_obstacle(20,260,200,40)
 
     x_new = Node(map.start.x,map.start.y)
 
@@ -43,6 +49,8 @@ if __name__ == "__main__":
 
         x_new, cost_new = map.steer(x_nearest, x_rand, cost)
 
+        if(not map.is_valid(x_new)):
+            continue
         if(map.is_in_obstacle(x_new)):
             continue
         # if(not map.collision_free(x_new,x_nearest)):
@@ -85,4 +93,33 @@ if __name__ == "__main__":
     map.display_map(x_rand)
 
     map.display_map(x_rand,best_path_found=True)
+
+    # cv2.waitKey(0)
+
+    print("refining")
+    for i in tqdm.tqdm(range(ITERATIONS)):
+        x_rand = map.sample(start_pose,goal_pose,map.c_best)
+
+        nearest_node_found, x_nearest, cost = map.nearest_node(x_rand)
+
+        if(nearest_node_found):
+            pass
+        else:
+            continue
+
+        x_new, cost_new = map.steer(x_nearest, x_rand, cost)
+        if(not map.is_valid(x_new)):
+            continue
+        if(map.is_in_obstacle(x_new)):
+            continue
+
+        map.set_node_cost(x_new)
+
+        nodes_in_radius = map.get_nodes_in_radius(search_radius, x_new)
+
+        # edge = Edge(x_new, x_nearest, cost_new)
+
+        map.rewire(x_new,nodes_in_radius)
+
+    map.display_converged_map(x_rand)
     cv2.waitKey(0)
