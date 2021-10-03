@@ -1,9 +1,3 @@
-"""
-add resolution, threshold to collision check
-check intermediate points for collision
-add dynamic map forming
-visualization gaps
-"""
 # x is width, y is height
 # just do x,y everywhere
 
@@ -45,6 +39,9 @@ class Map:
         self.solution_found = False
         self.bot_safety_distance = 1.0
         self.first_sample = True
+
+        self.major_axis = 0.0
+        self.minor_axis = 0.0
 
     def add_obstacle(self,x,y,width,height):
         for i in range(x,x+width):
@@ -147,6 +144,58 @@ class Map:
 
         return best_cost
 
+    def display_informed_converged_map(self,x_rand):
+        best_cost = 0.0
+
+        img = np.ones((self.height,self.width,3), np.uint8) * 255 # numpy array
+        img = cv2.circle(img,(self.start.x,self.start.y),5,(0,255,0),-1)
+        img = cv2.circle(img,(self.goal.x,self.goal.y),5,(0,0,255),-1)
+        # img = cv2.circle(img,(x_rand.x,x_rand.y),5,(0,0,0),-1)
+
+        for edge in self.edges:
+            node_1 = (edge.node_1.x,edge.node_1.y)
+            node_2 = (edge.node_2.x,edge.node_2.y)
+            img = cv2.line(img,node_1,node_2,(255,0,0),1)
+
+        curr_node = self.goal
+        while(curr_node.parent is not self.start):
+            node_1 = (curr_node.x,curr_node.y)
+            node_2 = (curr_node.parent.x,curr_node.parent.y)
+            img = cv2.line(img,node_1,node_2,(0,0,255),4)
+            curr_node = curr_node.parent
+        node_1 = (curr_node.x,curr_node.y)
+        node_2 = (curr_node.parent.x,curr_node.parent.y)
+        img = cv2.line(img,node_1,node_2,(0,0,255),4)
+
+        for obstacle in self.obstacle_list:
+            img[obstacle[0],obstacle[1]] = (0,0,0)
+
+        for node in self.nodes:
+            curr_node = node
+            path = []
+            while(curr_node is not None):
+                path.append(curr_node)
+                curr_node = curr_node.parent
+        
+            for i in range(len(path)-1):
+                node_1 = (path[i].x,path[i].y)
+                node_2 = (path[i+1].x,path[i+1].y)
+                img = cv2.line(img,node_1,node_2,(255,0,0),1)
+                node_1_N = Node(node_1[0],node_1[1])
+                node_2_N = Node(node_2[0],node_2[1])
+                best_cost += self.euclidean_distance(node_1_N,node_2_N)
+        
+        center_coordinates = ((self.start.x + self.goal.x)/2 , (self.start.y + self.goal.y)/2)
+        ellipse_angle =  math.atan2(self.goal.y - self.start.y, self.goal.x - self.start.x)
+        
+        img = cv2.ellipse(img, center_coordinates, axesLength = (self.major_axis,self.minor_axis),
+           angle =ellipse_angle, startAngle = 0, endAngle = 360, color = (128,128,128), thickness = 2)
+
+        cv2.imshow("img",img)
+        cv2.waitKey(2)
+
+        return best_cost
+
     def euclidean_distance(self, node_1, node_2):
         return np.sqrt( (node_1.x - node_2.x)**2 + (node_1.y - node_2.y)**2)
     
@@ -160,36 +209,34 @@ class Map:
 
     def informed_sample(self,x_start,x_goal,c_best):
         c_min = self.euclidean_distance(x_start,x_goal)
+        x_centre = np.array([(x_start.x + x_goal.x)/2,(x_start.y + x_goal.y)/2,0]).reshape(3,1)
 
-        a1 = np.transpose(np.array([(x_goal.x - x_start.x)/c_min, (x_goal.y - x_start.y)/c_min, 1])).reshape(3,1)
+        a1 = np.transpose(np.array([(x_goal.x - x_start.x)/c_min, (x_goal.y - x_start.y)/c_min, 0])).reshape(3,1)
         i1 = np.array([1.0, 0.0, 0.0]).reshape(1,3)
         M = a1 @ i1
 
         U, Sigma, V_t = np.linalg.svd(M)
         det_U = np.linalg.det(U)
         det_V = np.linalg.det(np.transpose(V_t))
+        print(det_U,det_V)
         dim = M.shape[0]
         c_middle_term = np.identity(dim)
-        c_middle_term[dim-2,dim-2] = det_U
-        c_middle_term[dim-1,dim-1] = det_V
-        C = U @ c_middle_term @ V_t
+        c_middle_term[dim-1,dim-1] = det_U * det_V
+        C = np.dot(np.dot(U,c_middle_term),V_t)
 
         diag_terms = math.sqrt(c_best**2 - c_min**2)/2
         L = np.identity(dim) * diag_terms
         L[0,0] = c_best/2
 
         x_ball = np.random.rand(dim,1)
-        x_centre = np.array([(x_start.x + x_goal.x)/2,(x_start.y + x_goal.y)/2,1]).reshape(3,1)
+        x_ball[2,0] = 0.0
 
-        print("C : ",C)
-        print("L : ",L)
-        print("x_ball : ",x_ball)
-        print("x_centre : ",x_centre)
-
-        x_f = C @ L @ x_ball + x_centre
-        print("sample : ",x_f)
+        x_f = np.dot(np.dot(C,L),x_ball) + x_centre
         
-        x_rand = Node(int(x_f[0,0]/x_f[1,0]), int(x_f[1,0]))
+        x_rand = Node(int(x_f[0,0]), int(x_f[1,0]))
+
+        # self.major_axis = c_best
+        self.minor_axis = diag_terms
 
         return x_rand
     
@@ -257,6 +304,7 @@ class Map:
         if(node.x < self.width and node.y < self.height):
             return True
         return False
+
     def is_in_obstacle(self,node):
         if(self.map[node.x,node.y,0] ==0 and self.map[node.x,node.y,1] == 0 and self.map[node.x,node.y,2] == 0):
             return 1
@@ -355,7 +403,7 @@ class Map:
                 if(self.collision_free(x_new,node)):
                     if(x_new.cost + self.euclidean_distance(x_new,node) < node.cost):
                         if(node in self.x_soln):
-                            _ = self.display_converged_map(x_new)
+                            _ = self.display_informed_converged_map(x_new)
                         """
                         if solution is improved, visualize improved solution
                         """
@@ -417,7 +465,7 @@ def debug_rewiring():
 
     map.rewire(x_rand,nodes_in_range)
 
-    map.informed_sample(map.start,map.goal,1000)
+    map.informed_sample(map.start,map.goal,130)
 
 if __name__=="__main__":
     debug_rewiring()

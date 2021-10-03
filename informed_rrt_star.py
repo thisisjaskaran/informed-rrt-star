@@ -89,6 +89,7 @@ if __name__ == "__main__":
     c_best = map.display_map(x_rand)
 
     c_best = map.display_map(x_rand,best_path_found=True)
+    map.major_axis = c_best
     print("c_best : ",c_best)
 
     print("refining")
@@ -116,7 +117,8 @@ if __name__ == "__main__":
         # edge = Edge(x_new, x_nearest, cost_new)
 
         map.rewire(x_new,nodes_in_radius)
+        map.major_axis = c_best
         cv2.waitKey(0)
 
-    c_best = map.display_converged_map(x_rand)
+    c_best = map.display_informed_converged_map(x_rand)
     cv2.waitKey(0)
