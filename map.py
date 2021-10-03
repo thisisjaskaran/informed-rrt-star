@@ -43,7 +43,6 @@ class Map:
         self.x_soln = []
 
         self.solution_found = False
-        self.c_best = np.inf
         self.bot_safety_distance = 1.0
         self.first_sample = True
 
@@ -56,6 +55,7 @@ class Map:
                 self.obstacle_list.append((j,i))
     
     def display_map(self,x_rand,best_path_found = False):
+        best_cost = 0.0
         # img = self.map
         img = np.ones((self.height,self.width,3), np.uint8) * 255 # numpy array
         img = cv2.circle(img,(self.start.x,self.start.y),5,(0,255,0),-1)
@@ -68,8 +68,6 @@ class Map:
             img = cv2.line(img,node_1,node_2,(255,0,0),1)
 
         if(best_path_found):
-            # cv2.waitKey(0)
-            # self.print_node_list(self.x_soln)
             curr_node = self.goal
             while(curr_node is not None):
                 self.x_soln.append(curr_node)
@@ -94,53 +92,18 @@ class Map:
                 node_1 = (path[i].x,path[i].y)
                 node_2 = (path[i+1].x,path[i+1].y)
                 img = cv2.line(img,node_1,node_2,(255,0,0),1)
+                node_1_N = Node(node_1[0],node_1[1])
+                node_2_N = Node(node_2[0],node_2[1])
+                best_cost += self.euclidean_distance(node_1_N,node_2_N)
 
         cv2.imshow("img",img)
         cv2.waitKey(2)
-    
-    def display_improved_map(self,x_rand):
-        # img = self.map
-        img = np.ones((self.height,self.width,3), np.uint8) * 255 # numpy array
-        img = cv2.circle(img,(self.start.x,self.start.y),5,(0,255,0),-1)
-        img = cv2.circle(img,(self.goal.x,self.goal.y),5,(0,0,255),-1)
-        # img = cv2.circle(img,(x_rand.x,x_rand.y),5,(0,0,0),-1)
 
-        for edge in self.edges:
-            node_1 = (edge.node_1.x,edge.node_1.y)
-            node_2 = (edge.node_2.x,edge.node_2.y)
-            img = cv2.line(img,node_1,node_2,(255,0,0),1)
-
-        # cv2.waitKey(0)
-        # self.print_node_list(self.x_soln)
-        curr_node = self.goal
-        while(curr_node is not None):
-            self.x_soln.append(curr_node)
-            curr_node = curr_node.parent
-    
-        for i in range(len(self.x_soln)-1):
-            node_1 = (self.x_soln[i].x,self.x_soln[i].y)
-            node_2 = (self.x_soln[i+1].x,self.x_soln[i+1].y)
-            img = cv2.line(img,node_1,node_2,(255,0,255),2)
-
-        for obstacle in self.obstacle_list:
-            img[obstacle[0],obstacle[1]] = (0,0,0)
-
-        for node in self.nodes:
-            curr_node = node
-            path = []
-            while(curr_node is not None):
-                path.append(curr_node)
-                curr_node = curr_node.parent
-        
-            for i in range(len(path)-1):
-                node_1 = (path[i].x,path[i].y)
-                node_2 = (path[i+1].x,path[i+1].y)
-                img = cv2.line(img,node_1,node_2,(255,0,0),1)
-
-        cv2.imshow("img",img)
-        cv2.waitKey(2)
+        return best_cost
     
     def display_converged_map(self,x_rand):
+        best_cost = 0.0
+
         img = np.ones((self.height,self.width,3), np.uint8) * 255 # numpy array
         img = cv2.circle(img,(self.start.x,self.start.y),5,(0,255,0),-1)
         img = cv2.circle(img,(self.goal.x,self.goal.y),5,(0,0,255),-1)
@@ -155,8 +118,11 @@ class Map:
         while(curr_node.parent is not self.start):
             node_1 = (curr_node.x,curr_node.y)
             node_2 = (curr_node.parent.x,curr_node.parent.y)
-            img = cv2.line(img,node_1,node_2,(0,0,255),2)
+            img = cv2.line(img,node_1,node_2,(0,0,255),4)
             curr_node = curr_node.parent
+        node_1 = (curr_node.x,curr_node.y)
+        node_2 = (curr_node.parent.x,curr_node.parent.y)
+        img = cv2.line(img,node_1,node_2,(0,0,255),4)
 
         for obstacle in self.obstacle_list:
             img[obstacle[0],obstacle[1]] = (0,0,0)
@@ -172,24 +138,60 @@ class Map:
                 node_1 = (path[i].x,path[i].y)
                 node_2 = (path[i+1].x,path[i+1].y)
                 img = cv2.line(img,node_1,node_2,(255,0,0),1)
+                node_1_N = Node(node_1[0],node_1[1])
+                node_2_N = Node(node_2[0],node_2[1])
+                best_cost += self.euclidean_distance(node_1_N,node_2_N)
 
         cv2.imshow("img",img)
         cv2.waitKey(2)
+
+        return best_cost
 
     def euclidean_distance(self, node_1, node_2):
         return np.sqrt( (node_1.x - node_2.x)**2 + (node_1.y - node_2.y)**2)
     
     def sample(self, x_start, x_goal, c_max):
-        # _1 = x_start
-        # _2 = x_goal
-        # _3 = c_max
-
         random_x = random.randint(0,self.width)
         random_y = random.randint(0,self.height)
 
         random_node = Node(random_x, random_y)
 
         return random_node
+
+    def informed_sample(self,x_start,x_goal,c_best):
+        c_min = self.euclidean_distance(x_start,x_goal)
+
+        a1 = np.transpose(np.array([(x_goal.x - x_start.x)/c_min, (x_goal.y - x_start.y)/c_min, 1])).reshape(3,1)
+        i1 = np.array([1.0, 0.0, 0.0]).reshape(1,3)
+        M = a1 @ i1
+
+        U, Sigma, V_t = np.linalg.svd(M)
+        det_U = np.linalg.det(U)
+        det_V = np.linalg.det(np.transpose(V_t))
+        dim = M.shape[0]
+        c_middle_term = np.identity(dim)
+        c_middle_term[dim-2,dim-2] = det_U
+        c_middle_term[dim-1,dim-1] = det_V
+        C = U @ c_middle_term @ V_t
+
+        diag_terms = math.sqrt(c_best**2 - c_min**2)/2
+        L = np.identity(dim) * diag_terms
+        L[0,0] = c_best/2
+
+        x_ball = np.random.rand(dim,1)
+        x_centre = np.array([(x_start.x + x_goal.x)/2,(x_start.y + x_goal.y)/2,1]).reshape(3,1)
+
+        print("C : ",C)
+        print("L : ",L)
+        print("x_ball : ",x_ball)
+        print("x_centre : ",x_centre)
+
+        x_f = C @ L @ x_ball + x_centre
+        print("sample : ",x_f)
+        
+        x_rand = Node(int(x_f[0,0]/x_f[1,0]), int(x_f[1,0]))
+
+        return x_rand
     
     def nearest_node(self, x_rand):
         cost = np.inf
@@ -236,10 +238,10 @@ class Map:
         den = node_1.x - node_2.x
         return math.atan2(num,den)
 
-    def collision_free(self, x_nearest, x_new, resolution = 0.1):
-        if(self.map[x_nearest.y,x_nearest.x,0] == 0 and self.map[x_nearest.y,x_nearest.x,1] == 0 and self.map[x_nearest.y,x_nearest.x,2] == 0):
+    def collision_free(self, x_nearest, x_new, resolution = 0.02):
+        if(self.map[x_nearest.x,x_nearest.y,0] == 0 and self.map[x_nearest.x,x_nearest.y,1] == 0 and self.map[x_nearest.x,x_nearest.y,2] == 0):
             return 0
-        if(self.map[x_new.y,x_new.x,0] == 0 and self.map[x_new.y,x_new.x,1] == 0 and self.map[x_new.y,x_new.x,2] == 0):
+        if(self.map[x_new.x,x_new.y,0] == 0 and self.map[x_new.x,x_new.y,1] == 0 and self.map[x_new.x,x_new.y,2] == 0):
             return 0
 
         parts = int(1/resolution)
@@ -287,7 +289,8 @@ class Map:
         nodes_in_radius = []
         for node in self.nodes:
             if(self.euclidean_distance(node,x_new) <= radius):
-                nodes_in_radius.append(node)
+                if(self.collision_free(node,x_new)):
+                    nodes_in_radius.append(node)
         return nodes_in_radius
 
     def delete_edge(self,node_1,node_2):
@@ -352,9 +355,9 @@ class Map:
                 if(self.collision_free(x_new,node)):
                     if(x_new.cost + self.euclidean_distance(x_new,node) < node.cost):
                         if(node in self.x_soln):
-                            self.display_improved_map(x_new)
+                            _ = self.display_converged_map(x_new)
                         """
-                        if solution is impmroved, visualize improved solution
+                        if solution is improved, visualize improved solution
                         """
                         node.cost = x_new.cost + self.euclidean_distance(x_new,node)
                         node.parent = x_new
@@ -413,6 +416,8 @@ def debug_rewiring():
     nodes_in_range = map.get_nodes_in_radius(check_radius,x_rand)
 
     map.rewire(x_rand,nodes_in_range)
+
+    map.informed_sample(map.start,map.goal,1000)
 
 if __name__=="__main__":
     debug_rewiring()

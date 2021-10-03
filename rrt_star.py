@@ -6,13 +6,13 @@ import tqdm
 
 if __name__ == "__main__":
 
-    start_pose = [60,60]
-    goal_pose = [60,370]
+    start_pose = [200,90]
+    goal_pose = [390,390]
     height = 400
     width = 400
-    step_size = 25
-    search_radius = 35.0
-    ITERATIONS = 1000
+    step_size = 10
+    search_radius = 25.0
+    ITERATIONS = 10000
 
     if(search_radius < step_size):
         print("search radius should be > step_size")
@@ -23,11 +23,11 @@ if __name__ == "__main__":
 
     # for i in range(0,width,40):
     #     for j in range(0,height,40):
-    #         map.add_obstacle(i,j,10,10)
+    #         map.add_obstacle(i,j,20,20)
 
-    map.add_obstacle(20,120,200,40)
+    # map.add_obstacle(2,120,250,40)
     # map.add_obstacle(150,200,250,40)
-    map.add_obstacle(20,260,200,40)
+    # map.add_obstacle(2,260,200,40)
 
     x_new = Node(map.start.x,map.start.y)
 
@@ -38,7 +38,7 @@ if __name__ == "__main__":
         if(map.solution_found):
             map.c_best = map.x_soln.sort()[0]
         
-        x_rand = map.sample(start_pose,goal_pose,map.c_best)
+        x_rand = map.sample(start_pose,goal_pose,10)
 
         nearest_node_found, x_nearest, cost = map.nearest_node(x_rand)
 
@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
     print("refining")
     for i in tqdm.tqdm(range(ITERATIONS)):
-        x_rand = map.sample(start_pose,goal_pose,map.c_best)
+        x_rand = map.sample(start_pose,goal_pose,10)
 
         nearest_node_found, x_nearest, cost = map.nearest_node(x_rand)
 
