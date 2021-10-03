@@ -43,6 +43,8 @@ class Map:
         self.major_axis = 0.0
         self.minor_axis = 0.0
 
+        self.best_cost_for_informed = np.inf
+
     def add_obstacle(self,x,y,width,height):
         for i in range(x,x+width):
             for j in range(y,y+height):
@@ -186,10 +188,10 @@ class Map:
                 best_cost += self.euclidean_distance(node_1_N,node_2_N)
         
         center_coordinates = ((self.start.x + self.goal.x)/2 , (self.start.y + self.goal.y)/2)
-        ellipse_angle =  math.atan2(self.goal.y - self.start.y, self.goal.x - self.start.x)
+        ellipse_angle =  self.nodes_slope(self.start,self.goal)
         
-        img = cv2.ellipse(img, center_coordinates, axesLength = (self.major_axis,self.minor_axis),
-           angle =ellipse_angle, startAngle = 0, endAngle = 360, color = (128,128,128), thickness = 2)
+        img = cv2.ellipse(  img, center_coordinates, (self.major_axis,self.minor_axis),
+                            ellipse_angle, 0, 360, (128,128,128), 2)
 
         cv2.imshow("img",img)
         cv2.waitKey(2)
@@ -232,9 +234,12 @@ class Map:
         x_ball[2,0] = 0.0
 
         x_f = np.dot(np.dot(C,L),x_ball) + x_centre
+
+        # print(x_f)
         
         x_rand = Node(int(x_f[0,0]), int(x_f[1,0]))
 
+        print(x_rand.x,x_rand.y)
         # self.major_axis = c_best
         self.minor_axis = diag_terms
 
@@ -403,7 +408,7 @@ class Map:
                 if(self.collision_free(x_new,node)):
                     if(x_new.cost + self.euclidean_distance(x_new,node) < node.cost):
                         if(node in self.x_soln):
-                            _ = self.display_informed_converged_map(x_new)
+                            self.best_cost_for_informed = self.display_converged_map(x_new)
                         """
                         if solution is improved, visualize improved solution
                         """
@@ -427,8 +432,8 @@ class Map:
             self.edges.append(best_cost_edge)
 
 def debug_rewiring():
-    start = [10,10]
-    goal = [90,90]
+    start = [60,60]
+    goal = [350,350]
     check_radius = 10.0
 
     map = Map(100,100,8,start,goal)
@@ -465,7 +470,7 @@ def debug_rewiring():
 
     map.rewire(x_rand,nodes_in_range)
 
-    map.informed_sample(map.start,map.goal,130)
+    map.informed_sample(map.start,map.goal,450)
 
 if __name__=="__main__":
     debug_rewiring()

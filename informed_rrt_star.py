@@ -89,13 +89,19 @@ if __name__ == "__main__":
     c_best = map.display_map(x_rand)
 
     c_best = map.display_map(x_rand,best_path_found=True)
+
     map.major_axis = c_best
+    map.best_cost_for_informed = c_best
+
     print("c_best : ",c_best)
 
     print("refining")
     for i in tqdm.tqdm(range(ITERATIONS)):
 
-        x_rand = map.informed_sample(map.start, map.goal, c_best)
+        x_rand = map.informed_sample(map.start, map.goal, map.best_cost_for_informed)
+
+        print("Informed Sample : ",x_rand.x,x_rand.y)
+        print("c_best : ",c_best)
 
         nearest_node_found, x_nearest, cost = map.nearest_node(x_rand)
 
@@ -117,7 +123,7 @@ if __name__ == "__main__":
         # edge = Edge(x_new, x_nearest, cost_new)
 
         map.rewire(x_new,nodes_in_radius)
-        map.major_axis = c_best
+
         cv2.waitKey(0)
 
     c_best = map.display_informed_converged_map(x_rand)
