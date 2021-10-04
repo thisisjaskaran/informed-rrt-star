@@ -1,0 +1,13 @@
+{
+    "parameters": [
+        {
+            "height" : 300,
+            "width" : 300,
+            "start_pose" : [60,60],
+            "goal_pose" : [270,270],
+            "step_size" : 13,
+            "search_radius" : 18.0,
+            "ITERATIONS" : 1000
+        }
+    ]
+}

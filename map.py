@@ -146,7 +146,7 @@ class Map:
 
         return best_cost
 
-    def display_informed_converged_map(self,x_rand):
+    def display_informed_converged_map(self,x_rand, final = False):
         best_cost = 0.0
 
         img = np.ones((self.height,self.width,3), np.uint8) * 255 # numpy array
@@ -154,12 +154,14 @@ class Map:
         img = cv2.circle(img,(self.goal.x,self.goal.y),5,(0,0,255),-1)
         # img = cv2.circle(img,(x_rand.x,x_rand.y),5,(0,0,0),-1)
 
-        for edge in self.edges:
-            node_1 = (edge.node_1.x,edge.node_1.y)
-            node_2 = (edge.node_2.x,edge.node_2.y)
-            img = cv2.line(img,node_1,node_2,(255,0,0),1)
+        if(not final):
+            for edge in self.edges:
+                node_1 = (edge.node_1.x,edge.node_1.y)
+                node_2 = (edge.node_2.x,edge.node_2.y)
+                img = cv2.line(img,node_1,node_2,(255,0,0),1)
 
         curr_node = self.goal
+        
         while(curr_node.parent is not self.start):
             node_1 = (curr_node.x,curr_node.y)
             node_2 = (curr_node.parent.x,curr_node.parent.y)
@@ -172,26 +174,27 @@ class Map:
         for obstacle in self.obstacle_list:
             img[obstacle[0],obstacle[1]] = (0,0,0)
 
-        for node in self.nodes:
-            curr_node = node
-            path = []
-            while(curr_node is not None):
-                path.append(curr_node)
-                curr_node = curr_node.parent
+        if(not final):
+            for node in self.nodes:
+                curr_node = node
+                path = []
+                while(curr_node is not None):
+                    path.append(curr_node)
+                    curr_node = curr_node.parent
+            
+                for i in range(len(path)-1):
+                    node_1 = (path[i].x,path[i].y)
+                    node_2 = (path[i+1].x,path[i+1].y)
+                    img = cv2.line(img,node_1,node_2,(255,0,0),1)
+                    node_1_N = Node(node_1[0],node_1[1])
+                    node_2_N = Node(node_2[0],node_2[1])
+                    best_cost += self.euclidean_distance(node_1_N,node_2_N)
         
-            for i in range(len(path)-1):
-                node_1 = (path[i].x,path[i].y)
-                node_2 = (path[i+1].x,path[i+1].y)
-                img = cv2.line(img,node_1,node_2,(255,0,0),1)
-                node_1_N = Node(node_1[0],node_1[1])
-                node_2_N = Node(node_2[0],node_2[1])
-                best_cost += self.euclidean_distance(node_1_N,node_2_N)
-        
-        center_coordinates = ((self.start.x + self.goal.x)/2 , (self.start.y + self.goal.y)/2)
-        ellipse_angle =  self.nodes_slope(self.start,self.goal)
-        
-        img = cv2.ellipse(  img, center_coordinates, (self.major_axis,self.minor_axis),
-                            ellipse_angle, 0, 360, (128,128,128), 2)
+            center_coordinates = (int((self.start.x + self.goal.x)/2) , int((self.start.y + self.goal.y)/2))
+            ellipse_angle =  self.nodes_slope(self.start,self.goal) * 180 / np.pi
+            
+            img = cv2.ellipse(  img, center_coordinates, (int(self.major_axis),int(self.minor_axis)),
+                                ellipse_angle, 0, 360, (128,128,128), 2)
 
         cv2.imshow("img",img)
         cv2.waitKey(2)
@@ -220,7 +223,7 @@ class Map:
         U, Sigma, V_t = np.linalg.svd(M)
         det_U = np.linalg.det(U)
         det_V = np.linalg.det(np.transpose(V_t))
-        print(det_U,det_V)
+        # print(det_U,det_V)
         dim = M.shape[0]
         c_middle_term = np.identity(dim)
         c_middle_term[dim-1,dim-1] = det_U * det_V
@@ -230,8 +233,9 @@ class Map:
         L = np.identity(dim) * diag_terms
         L[0,0] = c_best/2
 
-        x_ball = np.random.rand(dim,1)
-        x_ball[2,0] = 0.0
+        x_ball_theta = np.random.rand() * 2 * np.pi
+        x_ball_rad = np.random.rand()
+        x_ball = np.array([x_ball_rad*math.cos(x_ball_theta), x_ball_rad*math.sin(x_ball_theta), 0.0]).reshape(dim,1)
 
         x_f = np.dot(np.dot(C,L),x_ball) + x_centre
 
@@ -239,8 +243,8 @@ class Map:
         
         x_rand = Node(int(x_f[0,0]), int(x_f[1,0]))
 
-        print(x_rand.x,x_rand.y)
-        # self.major_axis = c_best
+        # print(x_rand.x,x_rand.y)
+        self.major_axis = self.get_best_cost()
         self.minor_axis = diag_terms
 
         return x_rand
@@ -408,7 +412,7 @@ class Map:
                 if(self.collision_free(x_new,node)):
                     if(x_new.cost + self.euclidean_distance(x_new,node) < node.cost):
                         if(node in self.x_soln):
-                            self.best_cost_for_informed = self.display_converged_map(x_new)
+                            _ = self.display_informed_converged_map(x_new)
                         """
                         if solution is improved, visualize improved solution
                         """
@@ -430,6 +434,14 @@ class Map:
                 self.edges.append(parent_edge)
             best_cost_edge = Edge(x_new,best_cost_node,self.euclidean_distance(x_new,best_cost_node))
             self.edges.append(best_cost_edge)
+
+    def get_best_cost(self):
+        curr_node = self.goal
+        best_cost = 0.0
+        while(curr_node.parent is not None):
+            best_cost += self.euclidean_distance(curr_node,curr_node.parent)
+            curr_node = curr_node.parent
+        return best_cost
 
 def debug_rewiring():
     start = [60,60]

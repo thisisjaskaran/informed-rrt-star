@@ -3,16 +3,26 @@ import cv2
 from map import *
 import time
 import tqdm
+import json
 
 if __name__ == "__main__":
 
-    start_pose = [60,60]
-    goal_pose = [350,350]
-    height = 400
-    width = 400
-    step_size = 22
-    search_radius = 27.0
-    ITERATIONS = 3000
+    f = open('config.json',)
+    
+    data = json.load(f)
+    
+    for param in data['parameters']:
+        height = param['height']
+        width = param['width']
+        start_pose = param['start_pose']
+        goal_pose = param['goal_pose']
+        step_size = param['step_size']
+        search_radius = param['search_radius']
+        ITERATIONS = param['ITERATIONS']
+    
+    f.close()
+
+    
 
     if(search_radius < step_size):
         print("search radius should be > step_size")
@@ -21,12 +31,12 @@ if __name__ == "__main__":
 
     map.set_node_cost(map.start)
 
-    # for i in range(0,width,40):
-    #     for j in range(0,height,40):
-    #         map.add_obstacle(i,j,20,20)
+    for i in range(0,width,40):
+        for j in range(0,height,40):
+            map.add_obstacle(i,j,20,20)
 
-    # map.add_obstacle(200,200,100,100)
-    # map.add_obstacle(150,200,250,40)
+    # map.add_obstacle(100,0,50,100)
+    # map.add_obstacle(100,120,200,50)
     # map.add_obstacle(2,260,200,40)
 
     x_new = Node(map.start.x,map.start.y)
@@ -90,18 +100,15 @@ if __name__ == "__main__":
 
     c_best = map.display_map(x_rand,best_path_found=True)
 
-    map.major_axis = c_best
-    map.best_cost_for_informed = c_best
+    # map.major_axis = map.get_best_cost()
+    # map.best_cost_for_informed = map.get_best_cost()
 
-    print("c_best : ",c_best)
+    # print("c_best : ",map.get_best_cost())
 
     print("refining")
     for i in tqdm.tqdm(range(ITERATIONS)):
 
-        x_rand = map.informed_sample(map.start, map.goal, map.best_cost_for_informed)
-
-        print("Informed Sample : ",x_rand.x,x_rand.y)
-        print("c_best : ",c_best)
+        x_rand = map.informed_sample(map.start, map.goal, map.get_best_cost())
 
         nearest_node_found, x_nearest, cost = map.nearest_node(x_rand)
 
@@ -120,11 +127,9 @@ if __name__ == "__main__":
 
         nodes_in_radius = map.get_nodes_in_radius(search_radius, x_new)
 
-        # edge = Edge(x_new, x_nearest, cost_new)
-
         map.rewire(x_new,nodes_in_radius)
 
-        cv2.waitKey(0)
+        # cv2.waitKey(0)
 
-    c_best = map.display_informed_converged_map(x_rand)
+    c_best = map.display_informed_converged_map(x_rand, final = True)
     cv2.waitKey(0)
