@@ -19,12 +19,16 @@ if __name__ == "__main__":
         search_radius = param['search_radius']
         ITERATIONS = param['ITERATIONS']
         show_edges = param['show_edges']
+        show_sample = param['show_sample']
+        show_ellipse = param['show_ellipse']
     
     f.close()
 
     map = Map(height, width, step_size, start_pose, goal_pose)
 
     map.show_edges = show_edges
+    map.show_sample = show_sample
+    map.show_ellipse = show_ellipse
 
     for i in range(0,width,50):
         for j in range(0,height,50):

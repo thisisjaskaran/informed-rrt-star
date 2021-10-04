@@ -7,6 +7,8 @@ import json
 
 if __name__ == "__main__":
 
+    s_time = time.time()
+
     f = open('config.json',)
     
     data = json.load(f)
@@ -20,6 +22,9 @@ if __name__ == "__main__":
         search_radius = param['search_radius']
         ITERATIONS = param['ITERATIONS']
         show_edges = param['show_edges']
+        show_sample = param['show_sample']
+        show_ellipse = param['show_ellipse']
+        threshold_cost = param['threshold_cost']
     
     f.close()
 
@@ -29,6 +34,8 @@ if __name__ == "__main__":
     map = Map(height, width, step_size, start_pose, goal_pose)
 
     map.show_edges = show_edges
+    map.show_sample = show_sample
+    map.show_ellipse = show_ellipse
 
     map.set_node_cost(map.start)
 
@@ -116,11 +123,18 @@ if __name__ == "__main__":
     print("Refining path ...")
 
     for i in tqdm.tqdm(range(ITERATIONS)):
+        if(map.get_best_cost() < threshold_cost):
+            break
         # print("num nodes : ",len(map.nodes))
+        loop_time = time.time()
 
         x_rand = map.informed_sample(map.start, map.goal, map.get_best_cost())
 
+        # print("Sampling time : ", time.time() - loop_time)
+
         nearest_node_found, x_nearest, cost = map.nearest_node(x_rand)
+
+        # print("Nearest node time : ", time.time() - loop_time)
 
         if(nearest_node_found):
             pass
@@ -128,16 +142,32 @@ if __name__ == "__main__":
             continue
 
         x_new, cost_new = map.steer(x_nearest, x_rand, cost)
+
+        # print("Steer time : ", time.time() - loop_time)
+
         if(not map.is_valid(x_new)):
             continue
         if(map.is_in_obstacle(x_new)):
             continue
 
+        # print("Check obstacle time : ", time.time() - loop_time)
+
         map.set_node_cost(x_new)
+
+        # print("Set node costs time : ", time.time() - loop_time)
 
         nodes_in_radius = map.get_nodes_in_radius(search_radius, x_new)
 
+        # print("Nodes in radius time : ", time.time() - loop_time)
+
         map.rewire(x_new,nodes_in_radius)
+
+        # print("Rewiring time : ", time.time() - loop_time)
+
+        # cv2.waitKey(0)
 
     c_best = map.display_informed_converged_map(x_rand, final = True)
     cv2.waitKey(0)
+
+    print("Total time : ", time.time() - s_time)
+    print("Best cost : ", map.get_best_cost())

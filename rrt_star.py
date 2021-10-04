@@ -6,6 +6,8 @@ import json
 
 if __name__ == "__main__":
 
+    s_time = time.time()
+
     f = open('config.json',)
     
     data = json.load(f)
@@ -19,6 +21,9 @@ if __name__ == "__main__":
         search_radius = param['search_radius']
         ITERATIONS = param['ITERATIONS']
         show_edges = param['show_edges']
+        show_sample = param['show_sample']
+        show_ellipse = param['show_ellipse']
+        threshold_cost = param['threshold_cost']
     
     f.close()
 
@@ -28,6 +33,8 @@ if __name__ == "__main__":
     map = Map(height, width, step_size, start_pose, goal_pose)
 
     map.show_edges = show_edges
+    map.show_sample = show_sample
+    map.show_ellipse = show_ellipse
 
     map.set_node_cost(map.start)
 
@@ -63,8 +70,6 @@ if __name__ == "__main__":
             continue
         if(map.is_in_obstacle(x_new)):
             continue
-        # if(not map.collision_free(x_new,x_nearest)):
-        #     continue
 
         map.set_node_cost(x_new)
 
@@ -89,8 +94,6 @@ if __name__ == "__main__":
 
         map.display_map(x_rand)
 
-        # cv2.waitKey(0)
-
     map.solution_found = True
 
     map.goal.parent = x_new
@@ -108,6 +111,8 @@ if __name__ == "__main__":
 
     print("refining")
     for i in tqdm.tqdm(range(ITERATIONS)):
+        if(map.get_best_cost() < threshold_cost):
+            break
         x_rand = map.sample(start_pose,goal_pose,10)
 
         nearest_node_found, x_nearest, cost = map.nearest_node(x_rand)
@@ -133,3 +138,6 @@ if __name__ == "__main__":
 
     map.display_converged_map(x_rand)
     cv2.waitKey(0)
+
+    print("Total time : ", time.time() - s_time)
+    print("Best cost : ", map.get_best_cost())

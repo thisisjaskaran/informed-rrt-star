@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 import random
 import math
+import time
 
 class Node:
     def __init__(self,x,y):
@@ -44,6 +45,8 @@ class Map:
 
         self.best_cost_for_informed = np.inf
         self.show_edges = 0
+        self.show_sample = 0
+        self.show_ellipse = 0
 
     def add_obstacle(self,x,y,width,height):
         for i in range(x,x+width):
@@ -59,7 +62,8 @@ class Map:
         img = np.ones((self.height,self.width,3), np.uint8) * 255 # numpy array
         img = cv2.circle(img,(self.start.x,self.start.y),5,(0,255,0),-1)
         img = cv2.circle(img,(self.goal.x,self.goal.y),5,(0,0,255),-1)
-        # img = cv2.circle(img,(x_rand.x,x_rand.y),5,(0,0,0),-1)
+        if(self.show_sample):
+            img = cv2.circle(img,(x_rand.x,x_rand.y),5,(0,0,0),-1)
 
         for edge in self.edges:
             node_1 = (edge.node_1.x,edge.node_1.y)
@@ -108,7 +112,8 @@ class Map:
         img = np.ones((self.height,self.width,3), np.uint8) * 255 # numpy array
         img = cv2.circle(img,(self.start.x,self.start.y),5,(0,255,0),-1)
         img = cv2.circle(img,(self.goal.x,self.goal.y),5,(0,0,255),-1)
-        # img = cv2.circle(img,(x_rand.x,x_rand.y),5,(0,0,0),-1)
+        if(self.show_sample):
+            img = cv2.circle(img,(x_rand.x,x_rand.y),5,(0,0,0),-1)
 
         for edge in self.edges:
             node_1 = (edge.node_1.x,edge.node_1.y)
@@ -156,7 +161,8 @@ class Map:
         img = np.ones((self.height,self.width,3), np.uint8) * 255 # numpy array
         img = cv2.circle(img,(self.start.x,self.start.y),5,(0,255,0),-1)
         img = cv2.circle(img,(self.goal.x,self.goal.y),5,(0,0,255),-1)
-        # img = cv2.circle(img,(x_rand.x,x_rand.y),5,(0,0,0),-1)
+        if(self.show_sample):
+            img = cv2.circle(img,(x_rand.x,x_rand.y),5,(0,0,0),-1)
 
         if(not final):
             for edge in self.edges:
@@ -195,12 +201,13 @@ class Map:
                     node_1_N = Node(node_1[0],node_1[1])
                     node_2_N = Node(node_2[0],node_2[1])
                     best_cost += self.euclidean_distance(node_1_N,node_2_N)
-        
-            center_coordinates = (int((self.start.x + self.goal.x)/2) , int((self.start.y + self.goal.y)/2))
-            ellipse_angle =  self.nodes_slope(self.start,self.goal) * 180 / np.pi
-            
-            img = cv2.ellipse(  img, center_coordinates, (int(self.major_axis),int(self.minor_axis)),
-                                ellipse_angle, 0, 360, (128,128,128), 2)
+
+            if(self.show_ellipse):
+                center_coordinates = (int((self.start.x + self.goal.x)/2) , int((self.start.y + self.goal.y)/2))
+                ellipse_angle =  self.nodes_slope(self.start,self.goal) * 180 / np.pi
+
+                img = cv2.ellipse(  img, center_coordinates, (int(self.major_axis),int(self.minor_axis)),
+                                    ellipse_angle, 0, 360, (128,128,128), 2)
 
         cv2.imshow("img",img)
         cv2.waitKey(1)
@@ -304,7 +311,7 @@ class Map:
         den = node_1.x - node_2.x
         return math.atan2(num,den)
 
-    def collision_free(self, x_nearest, x_new, resolution = 0.05):
+    def collision_free(self, x_nearest, x_new, resolution = 0.1):
         if(self.map[x_nearest.x,x_nearest.y,0] == 0 and self.map[x_nearest.x,x_nearest.y,1] == 0 and self.map[x_nearest.x,x_nearest.y,2] == 0):
             return 0
         if(self.map[x_new.x,x_new.y,0] == 0 and self.map[x_new.x,x_new.y,1] == 0 and self.map[x_new.x,x_new.y,2] == 0):
@@ -352,9 +359,13 @@ class Map:
             self.edges.remove(edge_)
 
     def rewire(self,x_new,nodes_in_radius):
+
+        rewire_start = time.time()
         
         for node in self.nodes:
             node.cost = self.set_node_cost(node)
+
+        # print("Cost recalc time : ", time.time() - rewire_start)
 
         cost = np.inf
         best_cost_node = None
@@ -366,6 +377,8 @@ class Map:
             if(node.cost + self.euclidean_distance(node,x_new) < cost):
                 best_cost_node = node
                 cost = node.cost + self.euclidean_distance(node,x_new)
+        
+        # print("Nodes in radius time : ", time.time() - rewire_start)
         
         if(best_cost_node is None):
             continue_rewire = False
@@ -383,8 +396,12 @@ class Map:
                 self.edges.append(edge)
             if(len(self.nodes) == 1):
                 print("1 node but still rewiring!")
+            
+            # print("Collision check time : ", time.time() - rewire_start)
 
             nodes_in_radius.remove(best_cost_node)
+
+            # print("Remove nodes in radius time : ", time.time() - rewire_start)
 
             # form new edge
             self.nodes.append(x_new)
@@ -396,6 +413,7 @@ class Map:
                     if(x_new.cost + self.euclidean_distance(x_new,node) < node.cost):
                         if(node in self.x_soln):
                             _ = self.display_informed_converged_map(x_new)
+                            pass
                         """
                         if solution is improved, visualize improved solution
                         """
@@ -415,8 +433,10 @@ class Map:
                 parent_edge.node_2 = node.parent
                 parent_edge.cost = self.euclidean_distance(node,node.parent)
                 self.edges.append(parent_edge)
+            # print("Actual rewiring time : ", time.time() - rewire_start)
             best_cost_edge = Edge(x_new,best_cost_node,self.euclidean_distance(x_new,best_cost_node))
             self.edges.append(best_cost_edge)
+            # cv2.waitKey(0)
 
     def get_best_cost(self):
         curr_node = self.goal
