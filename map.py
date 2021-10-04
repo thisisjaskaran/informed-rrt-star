@@ -171,17 +171,6 @@ class Map:
                 if(self.show_edges):
                     img = cv2.line(img,node_1,node_2,(255,0,0),1)
 
-        curr_node = self.goal
-        
-        while(curr_node.parent is not self.start):
-            node_1 = (curr_node.x,curr_node.y)
-            node_2 = (curr_node.parent.x,curr_node.parent.y)
-            img = cv2.line(img,node_1,node_2,(0,0,255),2)
-            curr_node = curr_node.parent
-        node_1 = (curr_node.x,curr_node.y)
-        node_2 = (curr_node.parent.x,curr_node.parent.y)
-        img = cv2.line(img,node_1,node_2,(0,0,255),2)
-
         for obstacle in self.obstacle_list:
             img[obstacle[0],obstacle[1]] = (0,0,0)
 
@@ -208,6 +197,17 @@ class Map:
 
                 img = cv2.ellipse(  img, center_coordinates, (int(self.major_axis),int(self.minor_axis)),
                                     ellipse_angle, 0, 360, (128,128,128), 2)
+            
+        curr_node = self.goal
+        
+        while(curr_node.parent is not self.start):
+            node_1 = (curr_node.x,curr_node.y)
+            node_2 = (curr_node.parent.x,curr_node.parent.y)
+            img = cv2.line(img,node_1,node_2,(0,0,255),2)
+            curr_node = curr_node.parent
+        node_1 = (curr_node.x,curr_node.y)
+        node_2 = (curr_node.parent.x,curr_node.parent.y)
+        img = cv2.line(img,node_1,node_2,(0,0,255),2)
 
         cv2.imshow("img",img)
         cv2.waitKey(1)

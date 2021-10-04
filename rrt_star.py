@@ -24,6 +24,9 @@ if __name__ == "__main__":
         show_sample = param['show_sample']
         show_ellipse = param['show_ellipse']
         threshold_cost = param['threshold_cost']
+        generate_random_map = param['generate_random_map']
+        num_random_obstacles = param['num_random_obstacles']
+        rand_obstacle_size = param['rand_obstacle_size']
     
     f.close()
 
@@ -38,9 +41,13 @@ if __name__ == "__main__":
 
     map.set_node_cost(map.start)
 
-    for i in range(0,width,40):
-        for j in range(0,height,40):
-            map.add_obstacle(i,j,20,20)
+    if(generate_random_map):
+        for i in range(num_random_obstacles):
+            map.add_obstacle(random.randint(0,width - rand_obstacle_size), random.randint(0,height - rand_obstacle_size), random.randint(0,rand_obstacle_size), random.randint(0,rand_obstacle_size))
+    else:
+        for i in range(0,width,40):
+            for j in range(0,height,40):
+                map.add_obstacle(i,j,20,20)
 
     # map.add_obstacle(2,120,250,40)
     # map.add_obstacle(150,200,250,40)
