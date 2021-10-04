@@ -1,33 +1,43 @@
-import numpy as np
 import cv2
 from map import *
 import time
 import tqdm
+import json
 
 if __name__ == "__main__":
 
-    start_pose = [200,90]
-    goal_pose = [390,390]
-    height = 400
-    width = 400
-    step_size = 10
-    search_radius = 20.0
-    ITERATIONS = 10000
+    f = open('config.json',)
+    
+    data = json.load(f)
+    
+    for param in data['parameters']:
+        height = param['height']
+        width = param['width']
+        start_pose = param['start_pose']
+        goal_pose = param['goal_pose']
+        step_size = param['step_size']
+        search_radius = param['search_radius']
+        ITERATIONS = param['ITERATIONS']
+        show_edges = param['show_edges']
+    
+    f.close()
 
     if(search_radius < step_size):
         print("search radius should be > step_size")
 
     map = Map(height, width, step_size, start_pose, goal_pose)
 
+    map.show_edges = show_edges
+
     map.set_node_cost(map.start)
 
-    # for i in range(0,width,40):
-        # for j in range(0,height,40):
-            # map.add_obstacle(i,j,20,20)
+    for i in range(0,width,40):
+        for j in range(0,height,40):
+            map.add_obstacle(i,j,20,20)
 
-    map.add_obstacle(2,120,250,40)
-    map.add_obstacle(150,200,250,40)
-    map.add_obstacle(2,260,200,40)
+    # map.add_obstacle(2,120,250,40)
+    # map.add_obstacle(150,200,250,40)
+    # map.add_obstacle(2,260,200,40)
 
     x_new = Node(map.start.x,map.start.y)
 

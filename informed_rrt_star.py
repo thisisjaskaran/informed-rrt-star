@@ -19,15 +19,16 @@ if __name__ == "__main__":
         step_size = param['step_size']
         search_radius = param['search_radius']
         ITERATIONS = param['ITERATIONS']
+        show_edges = param['show_edges']
     
     f.close()
-
-    
 
     if(search_radius < step_size):
         print("search radius should be > step_size")
 
     map = Map(height, width, step_size, start_pose, goal_pose)
+
+    map.show_edges = show_edges
 
     map.set_node_cost(map.start)
 
@@ -35,9 +36,21 @@ if __name__ == "__main__":
         for j in range(0,height,40):
             map.add_obstacle(i,j,20,20)
 
-    # map.add_obstacle(100,0,50,100)
-    # map.add_obstacle(100,120,200,50)
-    # map.add_obstacle(2,260,200,40)
+    # map.add_obstacle(30,180,220,30)
+    # map.add_obstacle(30,30,30,200)
+    # map.add_obstacle(230,30,30,200)
+
+    # map.add_obstacle(330,480,220,30)
+    # map.add_obstacle(330,330,30,200)
+    # map.add_obstacle(530,330,30,200)
+
+    # map.add_obstacle(30,480,220,30)
+    # map.add_obstacle(30,330,30,200)
+    # map.add_obstacle(230,330,30,200)
+
+    # map.add_obstacle(330,180,220,30)
+    # map.add_obstacle(330,30,30,200)
+    # map.add_obstacle(530,30,30,200)
 
     x_new = Node(map.start.x,map.start.y)
 
@@ -100,13 +113,10 @@ if __name__ == "__main__":
 
     c_best = map.display_map(x_rand,best_path_found=True)
 
-    # map.major_axis = map.get_best_cost()
-    # map.best_cost_for_informed = map.get_best_cost()
+    print("Refining path ...")
 
-    # print("c_best : ",map.get_best_cost())
-
-    print("refining")
     for i in tqdm.tqdm(range(ITERATIONS)):
+        # print("num nodes : ",len(map.nodes))
 
         x_rand = map.informed_sample(map.start, map.goal, map.get_best_cost())
 
@@ -128,8 +138,6 @@ if __name__ == "__main__":
         nodes_in_radius = map.get_nodes_in_radius(search_radius, x_new)
 
         map.rewire(x_new,nodes_in_radius)
-
-        # cv2.waitKey(0)
 
     c_best = map.display_informed_converged_map(x_rand, final = True)
     cv2.waitKey(0)

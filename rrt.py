@@ -2,16 +2,29 @@ import numpy as np
 import cv2
 from map import *
 import time
+import json
 
 if __name__ == "__main__":
 
-    start_pose = [20,30]
-    goal_pose = [410,440]
-    height = 500
-    width = 700
-    step_size = 13
+    f = open('config.json',)
+    
+    data = json.load(f)
+    
+    for param in data['parameters']:
+        height = param['height']
+        width = param['width']
+        start_pose = param['start_pose']
+        goal_pose = param['goal_pose']
+        step_size = param['step_size']
+        search_radius = param['search_radius']
+        ITERATIONS = param['ITERATIONS']
+        show_edges = param['show_edges']
+    
+    f.close()
 
     map = Map(height, width, step_size, start_pose, goal_pose)
+
+    map.show_edges = show_edges
 
     for i in range(0,width,50):
         for j in range(0,height,50):
