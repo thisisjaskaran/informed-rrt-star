@@ -215,7 +215,10 @@ class Map:
         return best_cost
 
     def euclidean_distance(self, node_1, node_2):
-        return np.sqrt( (node_1.x - node_2.x)**2 + (node_1.y - node_2.y)**2)
+        try:
+            return np.sqrt( (node_1.x - node_2.x)**2 + (node_1.y - node_2.y)**2)
+        except:
+            return 0
     
     def sample(self, x_start, x_goal, c_max):
         random_x = random.randint(0,self.width)
@@ -236,11 +239,10 @@ class Map:
         U, Sigma, V_t = np.linalg.svd(M)
         det_U = np.linalg.det(U)
         det_V = np.linalg.det(np.transpose(V_t))
-        # print(det_U,det_V)
         dim = M.shape[0]
         c_middle_term = np.identity(dim)
         c_middle_term[dim-1,dim-1] = det_U * det_V
-        C = np.dot(np.dot(U,c_middle_term),V_t)
+        C = U @ c_middle_term @ V_t
 
         try:
             diag_terms = math.sqrt(c_best**2 - c_min**2)/2
@@ -254,7 +256,7 @@ class Map:
         x_ball_rad = np.random.rand()
         x_ball = np.array([x_ball_rad*math.cos(x_ball_theta), x_ball_rad*math.sin(x_ball_theta), 0.0]).reshape(dim,1)
 
-        x_f = np.dot(np.dot(C,L),x_ball) + x_centre
+        x_f = C @ L @ x_ball + x_centre
 
         # print(x_f)
         

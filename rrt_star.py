@@ -139,8 +139,6 @@ if __name__ == "__main__":
 
         nodes_in_radius = map.get_nodes_in_radius(search_radius, x_new)
 
-        # edge = Edge(x_new, x_nearest, cost_new)
-
         map.rewire(x_new,nodes_in_radius)
 
     map.display_converged_map(x_rand)

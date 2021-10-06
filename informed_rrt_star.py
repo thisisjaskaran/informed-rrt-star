@@ -49,23 +49,7 @@ if __name__ == "__main__":
         for i in range(0,width,40):
             for j in range(0,height,40):
                 map.add_obstacle(i,j,20,20)
-
-    # map.add_obstacle(30,180,220,30)
-    # map.add_obstacle(30,30,30,200)
-    # map.add_obstacle(230,30,30,200)
-
-    # map.add_obstacle(330,480,220,30)
-    # map.add_obstacle(330,330,30,200)
-    # map.add_obstacle(530,330,30,200)
-
-    # map.add_obstacle(30,480,220,30)
-    # map.add_obstacle(30,330,30,200)
-    # map.add_obstacle(230,330,30,200)
-
-    # map.add_obstacle(330,180,220,30)
-    # map.add_obstacle(330,30,30,200)
-    # map.add_obstacle(530,30,30,200)
-
+                
     x_new = Node(map.start.x,map.start.y)
 
     _ = map.display_map(x_new)
@@ -132,7 +116,9 @@ if __name__ == "__main__":
     for i in tqdm.tqdm(range(ITERATIONS)):
         if(map.get_best_cost() < threshold_cost):
             break
+        
         # print("num nodes : ",len(map.nodes))
+        
         loop_time = time.time()
 
         x_rand = map.informed_sample(map.start, map.goal, map.get_best_cost())
