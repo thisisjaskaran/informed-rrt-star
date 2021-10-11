@@ -17,6 +17,7 @@ python3 rrt.py
 ```
 ## Sample Results
 <img src="media/rrt_output.png" width = "300" height = "300">
+<img src="media/rrt_output.png" width = "300" height = "300">
 
 # Running RRT*
 ```
@@ -24,7 +25,8 @@ cd individual
 python3 rrt_star.py
 ```
 ## Sample Results
-<img src="media/rrt_star_output.png" width = "300" height = "300">
+<img src="media/rrt_output.png" width = "300" height = "300">
+<img src="media/rrt_output.png" width = "300" height = "300">
 
 # Running I-RRT*
 ```
@@ -32,6 +34,7 @@ cd individual
 python3 informed_rrt_star.py
 ```
 ## Sample Results
+<img src="media/informed_rrt_star_output.png" width = "300" height = "300">
 <img src="media/informed_rrt_star_output.png" width = "300" height = "300">
 
 # Running RRT* and I-RRT* on the same map
