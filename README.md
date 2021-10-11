@@ -9,6 +9,7 @@ The config file can be used to switch and tune parameters such as step_size, sea
 ## Installing Dependencies
 ```
 pip3 install -r requirements.txt
+pip3 install opencv-python
 ```
 ## Running RRT
 ```
