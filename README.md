@@ -46,3 +46,4 @@ This will generate comparative plots of run times and best costs for both algori
     <img src="compare/plots/costs.png" width = "400" height = "390">
     <img src="compare/plots/times.png" width = "400" height = "390">
 </p>
+Above are the results for 50 runs on a randomly generated 400x400 obstacle map, step size = 12px, and search radius = 17px. I-RRT* is clearly seen outperforming the best cost of RRT*.
