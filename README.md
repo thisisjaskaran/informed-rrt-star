@@ -29,9 +29,9 @@ python3 informed_rrt_star.py
 ```
 ## Sample Results
 <p float="left">
-    <img src="media/rrt_output.png" width = "260" height = "260">
-    <img src="media/rrt_star_output.png" width = "260" height = "260">
-    <img src="media/informed_rrt_star_output.png" width = "260" height = "260">
+    <img src="media/rrt_output.png" width = "265" height = "265">
+    <img src="media/rrt_star_output.png" width = "265" height = "265">
+    <img src="media/informed_rrt_star_output.png" width = "265" height = "265">
 </p>
 (left to right) RRT, RRT*, Informed RRT*
 
@@ -43,6 +43,6 @@ python3 get_results.py
 This will generate comparative plots of run times and best costs for both algorithms and save the plots and log the results in a csv file.
 ### Comparison Results
 <p float="left">
-    <img src="compare/plots/costs.png" width = "480" height = "480">
-    <img src="compare/plots/times.png" width = "480" height = "480">
+    <img src="compare/plots/costs.png" width = "450" height = "450">
+    <img src="compare/plots/times.png" width = "450" height = "450">
 </p>
