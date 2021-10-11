@@ -6,6 +6,8 @@ import json
 
 if __name__ == "__main__":
 
+    s_time = time.time()
+
     f = open('config.json',)
     
     data = json.load(f)
@@ -21,8 +23,15 @@ if __name__ == "__main__":
         show_edges = param['show_edges']
         show_sample = param['show_sample']
         show_ellipse = param['show_ellipse']
+        threshold_cost = param['threshold_cost']
+        generate_random_map = param['generate_random_map']
+        num_random_obstacles = param['num_random_obstacles']
+        rand_obstacle_size = param['rand_obstacle_size']
     
     f.close()
+
+    if(search_radius < step_size):
+        print("search radius should be > step_size")
 
     map = Map(height, width, step_size, start_pose, goal_pose)
 
@@ -30,9 +39,15 @@ if __name__ == "__main__":
     map.show_sample = show_sample
     map.show_ellipse = show_ellipse
 
-    for i in range(0,width,50):
-        for j in range(0,height,50):
-            map.add_obstacle(i,j,30,30)
+    map.set_node_cost(map.start)
+
+    if(generate_random_map):
+        for i in range(num_random_obstacles):
+            map.add_obstacle(random.randint(0,width - rand_obstacle_size), random.randint(0,height - rand_obstacle_size), random.randint(0,rand_obstacle_size), random.randint(0,rand_obstacle_size))
+    else:
+        for i in range(0,width,40):
+            for j in range(0,height,40):
+                map.add_obstacle(i,j,20,20)
 
     x_new = Node(map.start.x,map.start.y)
 
@@ -43,7 +58,7 @@ if __name__ == "__main__":
         if(map.solution_found):
             map.c_best = map.x_soln.sort()[0]
         
-        x_rand = map.sample(start_pose,goal_pose,map.c_best)
+        x_rand = map.sample(start_pose,goal_pose,10)
 
         nearest_node_found, x_nearest, cost = map.nearest_node(x_rand)
 

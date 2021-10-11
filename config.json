@@ -3,17 +3,17 @@
         {
             "height" : 400,
             "width" : 400,
-            "start_pose" : [100,100],
-            "goal_pose" : [300,300],
-            "step_size" : 12,
-            "search_radius" : 17.0,
-            "ITERATIONS" : 1000,
+            "start_pose" : [200,200],
+            "goal_pose" : [370,30],
+            "step_size" : 62,
+            "search_radius" : 21.0,
+            "ITERATIONS" : 2000,
             "show_edges" : 1,
             "show_sample" : 0,
             "show_ellipse" : 1,
             "threshold_cost" : 0,
             "generate_random_map" : 1,
-            "num_random_obstacles" : 50,
+            "num_random_obstacles" : 500,
             "rand_obstacle_size" : 18
         }
     ]
