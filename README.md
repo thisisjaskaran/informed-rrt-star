@@ -43,6 +43,6 @@ python3 get_results.py
 This will generate comparative plots of run times and best costs for both algorithms and save the plots and log the results in a csv file.
 ### Comparison Results
 <p float="left">
-    <img src="compare/plots/costs.png" width = "390" height = "390">
-    <img src="compare/plots/times.png" width = "390" height = "390">
+    <img src="compare/plots/costs.png" width = "400" height = "390">
+    <img src="compare/plots/times.png" width = "400" height = "390">
 </p>
