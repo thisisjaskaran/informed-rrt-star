@@ -28,11 +28,12 @@ python3 informed_rrt_star.py
 ```
 # Sample Results
 <p float="center">
-    <img src="media/rrt_output.png" width = "200" height = "200">
-    <img src="media/rrt_star_output.png" width = "200" height = "200">
-    <img src="media/informed_rrt_star_output.png" width = "200" height = "200">
+    <img src="media/rrt_output.png" width = "250" height = "250">
+    <img src="media/rrt_star_output.png" width = "250" height = "250">
+    <img src="media/informed_rrt_star_output.png" width = "250" height = "250">
 </p>
 (left to right) RRT, RRT*, Informed RRT*
+
 # Running RRT* and I-RRT* on the same map
 ```
 cd compare
