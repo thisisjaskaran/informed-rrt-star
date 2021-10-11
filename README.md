@@ -1,41 +1,40 @@
-# Informed-RRT*
-## Introduction
+# Introduction
 This is a Python package which demonstrated the difference in performance between sampling-based planning algorithms such as RRT, RRT* and Informed RRT*.
-## Setting up the package
+# Setting up the package
 ```
 git clone https://github.com/thisisjaskaran/informed-rrt-star.git
 ```
 The config file can be used to switch and tune parameters such as step_size, search_radius, etc.
-## Installing Dependencies
+# Installing Dependencies
 ```
 pip3 install -r requirements.txt
 pip3 install opencv-python
 ```
-## Running RRT
+# Running RRT
 ```
 cd individual
 python3 rrt.py
 ```
-### Sample Results
-<img src="media/rrt_output.png" width = "200" height = "200">
+## Sample Results
+<img src="media/rrt_output.png" width = "300" height = "300">
 
-## Running RRT*
+# Running RRT*
 ```
 cd individual
 python3 rrt_star.py
 ```
-### Sample Results
-<img src="media/rrt_star_output.png" width = "200" height = "200">
+## Sample Results
+<img src="media/rrt_star_output.png" width = "300" height = "300">
 
-## Running I-RRT*
+# Running I-RRT*
 ```
 cd individual
 python3 informed_rrt_star.py
 ```
-### Sample Results
-<img src="media/informed_rrt_star_output.png" width = "200" height = "200">
+## Sample Results
+<img src="media/informed_rrt_star_output.png" width = "300" height = "300">
 
-## Running RRT* and I-RRT* on the same map
+# Running RRT* and I-RRT* on the same map
 ```
 cd compare
 python3 get_results.py
