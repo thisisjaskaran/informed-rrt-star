@@ -16,16 +16,22 @@ pip3 install opencv-python
 cd individual
 python3 rrt.py
 ```
+# Sample Results
+![rrt_1](media/rrt_output.png)
 ## Running RRT*
 ```
 cd individual
 python3 rrt_star.py
 ```
+# Sample Results
+![rrt_star_1](media/rrt_star_output.png)
 ## Running I-RRT*
 ```
 cd individual
 python3 informed_rrt_star.py
 ```
+# Sample Results
+![irrt_1](media/informed_rrt_star_output.png)
 ## Running RRT* and I-RRT* on the same map
 ```
 cd compare
