@@ -16,7 +16,7 @@
             "num_random_obstacles" : 200,
             "rand_obstacle_size" : 18,
             "min_obstacle_size" : 2,
-            "num_tests" : 5,
+            "num_tests" : 50,
             "show_plot" : 1,
             "final_path_only" : 1,
             "pause_after_each_map" : 0

@@ -67,10 +67,9 @@ class Logger:
         fig = plt.figure()
         fig.suptitle('Run times', fontsize=15)
 
-        y_lim = math.sqrt((self.start_pose[0] - self.goal_pose[0])**2 + (self.start_pose[1] - self.goal_pose[1])**2)
         axes = plt.gca()
         axes.set_xlim([1,self.num_tests])
-        axes.set_ylim([0,int(2*y_lim)])
+        axes.set_ylim([0,max(max(test_times_1),max(test_times_2))+20])
 
         plt.plot(num_iters,test_times_1)
         plt.plot(num_iters,test_times_2,label=label_2)
@@ -82,10 +81,9 @@ class Logger:
         fig = plt.figure()
         fig.suptitle('Path costs', fontsize=15)
 
-        y_lim = math.sqrt((self.start_pose[0] - self.goal_pose[0])**2 + (self.start_pose[1] - self.goal_pose[1])**2)
         axes = plt.gca()
         axes.set_xlim([1,self.num_tests])
-        axes.set_ylim([0,int(2*y_lim)])
+        axes.set_ylim([0,max(max(test_costs_1),max(test_costs_2))+20])
 
         plt.plot(num_iters,test_costs_1)
         plt.plot(num_iters,test_costs_2)

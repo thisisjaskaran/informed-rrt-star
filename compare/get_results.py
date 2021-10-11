@@ -39,6 +39,6 @@ if __name__ == "__main__":
             output_logger.writerow([i+1,rrt_star_times[i],informed_times[i],rrt_star_costs[i],informed_costs[i]])
     
     if(logger.show_plot):
-        # logger.plot_test_times(informed_times,rrt_star_times,test_iters,label_1="I-RRT*",label_2="RRT*")
+        logger.plot_test_times(informed_times,rrt_star_times,test_iters,label_1="I-RRT*",label_2="RRT*")
         logger.plot_test_costs(informed_costs,rrt_star_costs,test_iters,label_1="I-RRT*",label_2="RRT*")
     
