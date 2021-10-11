@@ -15,32 +15,34 @@ pip3 install opencv-python
 cd individual
 python3 rrt.py
 ```
-## Sample Results
-<p float="left">
-    <img src="media/rrt_output.png" width = "300" height = "300">
-    <img src="media/rrt_output.png" width = "300" height = "300">
-</p>
-
 # Running RRT*
 ```
 cd individual
 python3 rrt_star.py
 ```
-## Sample Results
-<p float="left">
-    <img src="media/rrt_output.png" width = "300" height = "300">
-    <img src="media/rrt_output.png" width = "300" height = "300">
-</p>
 
 # Running I-RRT*
 ```
 cd individual
 python3 informed_rrt_star.py
 ```
-## Sample Results
+# Sample Results
+## RRT
 <p float="left">
-    <img src="media/informed_rrt_star_output.png" width = "300" height = "300">
-    <img src="media/informed_rrt_star_output.png" width = "300" height = "300">
+    <img src="media/rrt_output.png" width = "400" height = "400">
+    <img src="media/rrt_output.png" width = "400" height = "400">
+</p>
+
+## RRT*
+<p float="left">
+    <img src="media/rrt_star_output.png" width = "400" height = "400">
+    <img src="media/rrt_star_output.png" width = "400" height = "400">
+</p>
+
+## Informed RRT*
+<p float="left">
+    <img src="media/informed_rrt_star_output.png" width = "400" height = "400">
+    <img src="media/informed_rrt_star_output.png" width = "400" height = "400">
 </p>
 
 # Running RRT* and I-RRT* on the same map
