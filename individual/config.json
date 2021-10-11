@@ -1,0 +1,22 @@
+{
+    "parameters": [
+        {
+            "height" : 400,
+            "width" : 400,
+            "start_pose" : [100,100],
+            "goal_pose" : [300,300],
+            "step_size" : 12,
+            "search_radius" : 17.0,
+            "ITERATIONS" : 2000,
+            "show_edges" : 1,
+            "show_sample" : 0,
+            "show_ellipse" : 1,
+            "threshold_cost" : 0,
+            "generate_random_map" : 1,
+            "num_random_obstacles" : 500,
+            "rand_obstacle_size" : 18,
+            "clearance" : 12,
+            "final_path_only" : 0
+        }
+    ]
+}
