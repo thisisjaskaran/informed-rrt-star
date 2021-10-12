@@ -40,7 +40,7 @@ python3 informed_rrt_star.py
 cd compare
 python3 get_results.py
 ```
-This will generate comparative plots of run times and best costs for both algorithms and save the plots and log the results in a csv file.
+This will generate comparative plots of run times and best costs for both algorithms and save the plots and log the results in a ![csv file](compare/results.csv).
 ### Comparison Results
 <p float="left">
     <img src="compare/plots/costs.png" width = "400" height = "370">
